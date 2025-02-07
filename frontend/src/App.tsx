@@ -1,35 +1,236 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+// General react imports.
+import { useMemo, useState } from 'react';
+
+// MRT imports.
+import {
+  MantineReactTable,
+  useMantineReactTable,
+  type MRT_ColumnDef,
+  type MRT_ColumnFilterFnsState,
+  type MRT_ColumnFiltersState,
+  type MRT_PaginationState,
+  type MRT_SortingState,
+} from 'mantine-react-table';
+
+// UI elements.
+import { ActionIcon, Tooltip } from '@mantine/core';
+import { IconRefresh } from '@tabler/icons-react';
+
+// react-query imports.
+import {
+  QueryClient,
+  QueryClientProvider,
+  useQuery,
+} from '@tanstack/react-query';
+
 import './App.css'
 
-function App() {
-  const [count, setCount] = useState(0)
+// Conjunction datatype.
+type Conjunction = {
+  norad_id_i: number;
+  norad_id_j: number;
+  tca: string;
+  tca_pj: number;
+  dca: number;
+  relative_speed: number;
+};
 
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+// Type expected from the conjunctions endpoint in the backend.
+type ConjunctionApiResponse = {
+  // The set of conjunctions to be displayed in the current page.
+  rows: Array<Conjunction>,
+  // The total number of conjunctions in the dataframe.
+  tot_nrows: number;
 }
 
-export default App
+// Bundle of parameters to be passed to useGetConjunctions(). This contains
+// several MRT types describing aspects of the table state such as the sorting
+// criteria, pagination, filtering, etc.
+type useGetConjunctionsParams = {
+  columnFilterFns: MRT_ColumnFilterFnsState;
+  columnFilters: MRT_ColumnFiltersState;
+  sorting: MRT_SortingState;
+  pagination: MRT_PaginationState;
+}
+
+// react-query hook to fetch the list of conjunctions from the backend.
+const useGetConjunctions = ({ columnFilterFns, columnFilters, sorting, pagination }: useGetConjunctionsParams) => {
+  console.log(`columnFilterFns=${JSON.stringify(columnFilterFns)}`)
+  console.log(`columnFilters=${JSON.stringify(columnFilters)}`)
+
+  // API url.
+  const url = 'http://localhost:8000/conjunctions/'
+
+  // The body for the POST request. Here we are setting all the parameters
+  // to be passed to the backend API.
+  const body = {
+    begin: pagination.pageIndex * pagination.pageSize,
+    nrows: pagination.pageSize,
+    sorting: sorting,
+  };
+
+  // Define the function that performs the API call.
+  const queryFunction = async () => {
+    // Options for the request.
+    const requestOptions = {
+      method: 'POST',
+      // NOTE: it is important to set the correct content type here.
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    };
+
+    // Make the request.
+    const response = await fetch(url, requestOptions);
+
+    // Fetch the result
+    const responseData = await response.json();
+
+    // Handle errors.
+    if (!response.ok) {
+      // Get error message from body or default to response status.
+      const error = (responseData && responseData.message) || response.status;
+      return Promise.reject(error);
+    }
+
+    return responseData;
+  };
+
+  // NOTE: what this does is essentially adding a few features on top of just
+  // calling queryFunction() directly. The important bit for us it the caching behaviour:
+  // if the result of a previous invocation of queryFunction() for a given 'body' was already
+  // computed, the cached result will be returned.
+  return useQuery<ConjunctionApiResponse>({
+    // Here's the cache: we need to give a unique name ('conjunctions')
+    // and pass the current 'body'.
+    queryKey: ['conjunctions', body],
+    queryFn: queryFunction,
+    // NOTE: see https://github.com/TanStack/query/discussions/6460.
+    placeholderData: (prev) => prev,
+    // NOTE: do not refetch previously viewed pages until cache is more than 30 seconds old.
+    staleTime: 30_000,
+  });
+};
+
+// Function to create the table of conjunctions.
+const ConjunctionsTable = () => {
+  // Definition of the columns.
+  const columns = useMemo<MRT_ColumnDef<Conjunction>[]>(
+    () => [
+      {
+        accessorKey: 'norad_id_i',
+        header: 'Norad ID i',
+        columnFilterModeOptions: ['contains'],
+      },
+      {
+        accessorKey: 'norad_id_j',
+        header: 'Norad ID j',
+        columnFilterModeOptions: ['contains'],
+      },
+      {
+        accessorKey: 'tca',
+        header: 'TCA (UTC)',
+        // NOTE: the idea here is to regularise the date representation
+        // by converting it to Date and then back to ISO format.
+        Cell: ({ cell }) => new Date(cell.getValue<string>()).toISOString(),
+        enableColumnFilter: false
+      },
+      {
+        accessorKey: 'dca',
+        header: 'DCA (km)',
+        Cell: ({ cell }) => cell.getValue<Number>().toPrecision(4),
+        columnFilterModeOptions: ['greaterThan', 'lessThan', 'between', 'betweenInclusive'],
+      },
+      {
+        accessorKey: 'relative_speed',
+        header: 'Rel. speed (km/s)',
+        Cell: ({ cell }) => cell.getValue<Number>().toPrecision(4),
+        columnFilterModeOptions: ['greaterThan', 'lessThan', 'between', 'betweenInclusive'],
+      },
+    ],
+    [],
+  );
+
+  // Manage MRT state that we want to pass to our API.
+  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(
+    [],
+  );
+  // Filter modes. We have different defaults depending on the column.
+  const [columnFilterFns, setColumnFilterFns] =
+    useState<MRT_ColumnFilterFnsState>(
+      {
+        'norad_id_i': 'contains', 'norad_id_j': 'contains',
+        'dca': 'betweenInclusive', 'relative_speed': 'betweenInclusive'
+      }
+    );
+  const [sorting, setSorting] = useState<MRT_SortingState>([]);
+  const [pagination, setPagination] = useState<MRT_PaginationState>({
+    pageIndex: 0,
+    pageSize: 10,
+  });
+
+  // Call our custom react-query hook to fetch the data from the backend.
+  const { data, isError, isFetching, isLoading, refetch } = useGetConjunctions({
+    columnFilterFns,
+    columnFilters,
+    pagination,
+    sorting
+  });
+
+  // Fetch the conjunctions for the current page and the total
+  // number of conjunctions from the response.
+  const fetchedConjunctions = data?.rows ?? [];
+  const totalRowCount = data?.tot_nrows ?? 0;
+
+  const table = useMantineReactTable({
+    columns,
+    data: fetchedConjunctions,
+    enableColumnFilterModes: true,
+    columnFilterModeOptions: [],
+    initialState: { showColumnFilters: true },
+    manualFiltering: true,
+    manualPagination: true,
+    manualSorting: true,
+    mantineToolbarAlertBannerProps: isError
+      ? {
+        color: 'red',
+        children: 'Error loading data',
+      }
+      : undefined,
+    onColumnFilterFnsChange: setColumnFilterFns,
+    onColumnFiltersChange: setColumnFilters,
+    onPaginationChange: setPagination,
+    onSortingChange: setSorting,
+    renderTopToolbarCustomActions: () => (
+      <Tooltip label="Refresh Data">
+        <ActionIcon onClick={() => refetch()}>
+          <IconRefresh />
+        </ActionIcon>
+      </Tooltip>
+    ),
+    rowCount: totalRowCount,
+    state: {
+      columnFilterFns,
+      columnFilters,
+      isLoading,
+      pagination,
+      showAlertBanner: isError,
+      showProgressBars: isFetching,
+      sorting,
+    },
+    enableColumnDragging: true,
+    enableColumnOrdering: true,
+    enableGlobalFilter: false
+  });
+
+  return <MantineReactTable table={table} />;
+};
+
+const queryClient = new QueryClient();
+
+const ConjunctionsQueryProvider = () => (
+  <QueryClientProvider client={queryClient}>
+    <ConjunctionsTable />
+  </QueryClientProvider>
+);
+
+export default ConjunctionsQueryProvider;
