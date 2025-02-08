@@ -3,19 +3,21 @@ import datetime
 from typing import Literal
 from pydantic import BaseModel, Field
 from fastapi import APIRouter
+import threading
+import pathlib
 
 router = APIRouter(
     prefix="/conjunctions",
     tags=["conjunctions"],
 )
 
+_conj_lock = threading.Lock()
+_conj = pl.read_parquet(pathlib.Path(__file__).parent.resolve() / "conj.parquet")
+
 
 def _get_conjunctions() -> pl.DataFrame:
-    import pathlib
-
-    cur_dir = pathlib.Path(__file__).parent.resolve()
-
-    return pl.read_parquet(cur_dir / "conj.parquet")
+    with _conj_lock:
+        return _conj
 
 
 class Conjunction(BaseModel):
@@ -61,8 +63,7 @@ def get_conjunctions(
 
         df = df.sort(by=sort_cols, descending=desc)
 
-    # Fetch row range from pagination, collect and convert
-    # to dicts.
+    # Fetch row range from pagination, collect and convert to dicts.
     rows = df[begin : begin + nrows].collect().to_dicts()
 
     return Conjunctions.model_validate(
