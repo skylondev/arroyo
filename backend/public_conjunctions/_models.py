@@ -33,7 +33,7 @@ class column_sort(BaseModel):
     id: Literal["norad_id_i", "norad_id_j", "tca", "tca_pj", "dca", "relative_speed"]
 
 
-norad_id_filter_fns = Literal["contains"]
+norad_id_filter_fns = Literal["equals"]
 
 
 # NOTE: use enum in place of Literal so that we can fetch
@@ -128,7 +128,7 @@ class conjunctions_params(BaseModel):
 
     @model_validator(mode="after")
     def check_unique_sorting(self) -> Self:
-        # Check that the sorting vector of columns does not contain duplicates.
+        # Check that the 'sorting' list does not contain duplicate column names.
         id_list = list(_.id for _ in self.sorting)
         if len(set(id_list)) != len(id_list):
             raise ValueError("The list of ids in 'sorting' must be unique")

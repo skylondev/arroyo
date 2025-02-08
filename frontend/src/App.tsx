@@ -55,11 +55,6 @@ type useGetConjunctionsParams = {
 
 // react-query hook to fetch the list of conjunctions from the backend.
 const useGetConjunctions = ({ columnFilterFns, columnFilters, sorting, pagination }: useGetConjunctionsParams) => {
-  // TODO remove
-  console.log(`columnFilterFns=${JSON.stringify(columnFilterFns)}`)
-  console.log(`columnFilters=${JSON.stringify(columnFilters)}`)
-  console.log(`sorting=${JSON.stringify(sorting)}`)
-
   // API url.
   const url = 'http://localhost:8000/public_conjunctions/'
 
@@ -123,12 +118,12 @@ const ConjunctionsTable = () => {
       {
         accessorKey: 'norad_id_i',
         header: 'Norad ID i',
-        columnFilterModeOptions: ['contains'],
+        columnFilterModeOptions: ['equals'],
       },
       {
         accessorKey: 'norad_id_j',
         header: 'Norad ID j',
-        columnFilterModeOptions: ['contains'],
+        columnFilterModeOptions: ['equals'],
       },
       {
         accessorKey: 'tca',
@@ -162,7 +157,7 @@ const ConjunctionsTable = () => {
   const [columnFilterFns, setColumnFilterFns] =
     useState<MRT_ColumnFilterFnsState>(
       {
-        'norad_id_i': 'contains', 'norad_id_j': 'contains',
+        'norad_id_i': 'equals', 'norad_id_j': 'equals',
         'dca': 'betweenInclusive', 'relative_speed': 'betweenInclusive'
       }
     );
@@ -190,6 +185,7 @@ const ConjunctionsTable = () => {
     data: fetchedConjunctions,
     enableColumnFilterModes: true,
     columnFilterModeOptions: [],
+    enableFilterMatchHighlighting: false,
     initialState: { showColumnFilters: true },
     manualFiltering: true,
     manualPagination: true,
