@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from . import conjunctions
+from . import public_conjunctions
 
 origins = [
     "http://localhost:5173",
@@ -16,4 +16,4 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(conjunctions.router)
+app.include_router(public_conjunctions.router)

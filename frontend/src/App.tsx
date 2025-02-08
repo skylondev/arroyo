@@ -58,18 +58,19 @@ const useGetConjunctions = ({ columnFilterFns, columnFilters, sorting, paginatio
   // TODO remove
   console.log(`columnFilterFns=${JSON.stringify(columnFilterFns)}`)
   console.log(`columnFilters=${JSON.stringify(columnFilters)}`)
+  console.log(`sorting=${JSON.stringify(sorting)}`)
 
   // API url.
-  const url = 'http://localhost:8000/conjunctions/'
+  const url = 'http://localhost:8000/public_conjunctions/'
 
   // The body for the POST request. Here we are setting all the parameters
-  // to be passed to the backend API.
+  // to be passed to the backend.
   const body = {
     begin: pagination.pageIndex * pagination.pageSize,
     nrows: pagination.pageSize,
     sorting: sorting,
-    columnFilterFns: columnFilterFns,
-    columnFilters: columnFilters,
+    conjunctions_filter_fns: columnFilterFns,
+    conjunctions_filters: columnFilters,
   };
 
   // Define the function that performs the API call.
