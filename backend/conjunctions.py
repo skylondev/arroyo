@@ -1,6 +1,6 @@
 import polars as pl
 import datetime
-from typing import Literal
+from typing import Literal, Annotated
 from pydantic import BaseModel, Field
 from fastapi import APIRouter
 import threading
@@ -41,17 +41,53 @@ class ColumnSort(BaseModel):
     id: Literal["norad_id_i", "norad_id_j", "tca", "tca_pj", "dca", "relative_speed"]
 
 
+NoradIDFilterFns = Literal["contains"]
+DCAFilterFns = Literal["greaterThan", "lessThan", "between", "betweenInclusive"]
+RelativeSpeedFilterFns = DCAFilterFns
+
+
+class ConjunctionsFilterFns(BaseModel):
+    norad_id_i: NoradIDFilterFns
+    norad_id_j: NoradIDFilterFns
+    dca: DCAFilterFns
+    relative_speed: RelativeSpeedFilterFns
+
+
+class NoradIDIFilter(BaseModel):
+    id: Literal["norad_id_i"]
+    value: str
+
+
+class NoradIDJFilter(BaseModel):
+    id: Literal["norad_id_j"]
+    value: str
+
+
+class DCAFilter(BaseModel):
+    id: Literal["dca"]
+    value: Annotated[list[str | None], Field(min_items=1, max_items=2)] | str
+
+
+class RelativeSpeedFilter(BaseModel):
+    id: Literal["relative_speed"]
+    value: Annotated[list[str | None], Field(min_items=1, max_items=2)] | str
+
+
 class ConjunctionsParams(BaseModel):
     begin: int = Field(..., ge=0)
-    nrows: int = Field(..., ge=0)
+    nrows: int = Field(..., ge=0, le=500)
     sorting: list[ColumnSort] = []
+    columnFilterFns: ConjunctionsFilterFns
+    columnFilters: list[
+        NoradIDIFilter | NoradIDJFilter | DCAFilter | RelativeSpeedFilter
+    ]
 
 
 @router.post("/")
 def get_conjunctions(
     params: ConjunctionsParams,
 ) -> Conjunctions:
-    begin, nrows, sorting = params.model_dump().values()
+    begin, nrows, sorting, columnFilterFns, columnFilters = params.model_dump().values()
 
     _conj = _get_conjunctions()
 

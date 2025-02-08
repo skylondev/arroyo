@@ -55,6 +55,7 @@ type useGetConjunctionsParams = {
 
 // react-query hook to fetch the list of conjunctions from the backend.
 const useGetConjunctions = ({ columnFilterFns, columnFilters, sorting, pagination }: useGetConjunctionsParams) => {
+  // TODO remove
   console.log(`columnFilterFns=${JSON.stringify(columnFilterFns)}`)
   console.log(`columnFilters=${JSON.stringify(columnFilters)}`)
 
@@ -67,6 +68,8 @@ const useGetConjunctions = ({ columnFilterFns, columnFilters, sorting, paginatio
     begin: pagination.pageIndex * pagination.pageSize,
     nrows: pagination.pageSize,
     sorting: sorting,
+    columnFilterFns: columnFilterFns,
+    columnFilters: columnFilters,
   };
 
   // Define the function that performs the API call.
