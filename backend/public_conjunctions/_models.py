@@ -79,6 +79,8 @@ class relative_speed_filter(BaseModel):
 
 
 class conjunctions_params(BaseModel):
+    model_config = {"extra": "forbid"}
+
     begin: int = Field(..., ge=0)
     nrows: int = Field(..., ge=0, le=500)
     sorting: list[column_sort]
@@ -86,6 +88,7 @@ class conjunctions_params(BaseModel):
     conjunctions_filters: list[
         norad_id_i_filter | norad_id_j_filter | dca_filter | relative_speed_filter
     ]
+    global_filter: str | None = None
 
     @model_validator(mode="after")
     def check_unique_filter_ids(self) -> Self:

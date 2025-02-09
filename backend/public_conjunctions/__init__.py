@@ -18,12 +18,28 @@ def get_conjunctions(
 
     df = _conj.lazy()
 
-    # Handle filtering first.
-    if params.conjunctions_filters:
-        # We have one or more filters. We will be parsing them into polars
-        # expressions and then apply them all at once.
-        filters: list[pl.Expr] = []
+    # If we have filtering to do, we will collect the filtering expressions
+    # here and apply them all at once later.
+    filters: list[pl.Expr] = []
 
+    # Handle global filtering.
+    if params.global_filter is not None:
+        gf_str = params.global_filter.strip()
+        filters.append(
+            (
+                pl.col("norad_id_i")
+                .cast(str)
+                .str.contains_any([gf_str], ascii_case_insensitive=True)
+            )
+            | (
+                pl.col("norad_id_j")
+                .cast(str)
+                .str.contains_any([gf_str], ascii_case_insensitive=True)
+            )
+        )
+
+    # Handle column filtering.
+    if params.conjunctions_filters:
         for cur_filter in params.conjunctions_filters:
             # Extract the column's name, the filter function
             # and the filter value.
@@ -84,11 +100,9 @@ def get_conjunctions(
                         else:
                             filters.append(pl.col(col) < value)
 
-        # Apply the filter(s).
-        # NOTE: filters may be empty if the validation of all filters failed. In this
-        # case we cannot call filter() with an empty set of arguments.
-        if filters:
-            df = df.filter(*filters)
+    # Apply the filter(s), if any.
+    if filters:
+        df = df.filter(*filters)
 
     # Handle sorting.
     if params.sorting:
