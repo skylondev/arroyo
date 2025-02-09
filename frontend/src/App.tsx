@@ -226,7 +226,7 @@ const ConjunctionsTable = () => {
     enableColumnDragging: true,
     enableColumnOrdering: true,
     mantineSearchTextInputProps: {
-      placeholder: 'Search satellite',
+      placeholder: 'Search satellites',
       sx: { minWidth: '300px' },
     },
     onGlobalFilterChange: setGlobalFilter,
