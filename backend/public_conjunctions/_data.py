@@ -46,6 +46,12 @@ class conjunction_data:
 def _conj_init_setup() -> conjunction_data:
     logger = logging.getLogger("arroyo")
 
+    # Helper to create empty conjunction data.
+    def make_empty() -> conjunction_data:
+        return conjunction_data(
+            n_missed_conj=0, df=pl.DataFrame([], schema=_conj_schema)
+        )
+
     # Check if we have existing data in the cache.
     if _conj_path.exists():
         # There is conjunction data in the cache, load it.
@@ -56,8 +62,17 @@ def _conj_init_setup() -> conjunction_data:
             f"Existing conjunctions data with UTC mtime {datetime.datetime.utcfromtimestamp(os.path.getmtime(_conj_path))} found on startup"
         )
 
-        with open(_conj_path, "rb") as f:
-            ret: conjunction_data = pickle.load(f)
+        try:
+            with open(_conj_path, "rb") as f:
+                ret: conjunction_data = pickle.load(f)
+        except Exception:
+            logger.error(
+                "Exception caught while attempting to load cached conjunction data, returning empty data instead",
+                exc_info=True,
+                stack_info=True,
+            )
+
+            return make_empty()
 
         if ret.df.schema != _conj_schema:
             # Schema mismatch.
@@ -69,9 +84,7 @@ def _conj_init_setup() -> conjunction_data:
             _conj_path.unlink()
 
             # Return empty data.
-            return conjunction_data(
-                n_missed_conj=0, df=pl.DataFrame([], schema=_conj_schema)
-            )
+            return make_empty()
 
         return ret
     else:
@@ -80,9 +93,7 @@ def _conj_init_setup() -> conjunction_data:
             "No existing conjunctions data found on startup, initialising empty data"
         )
 
-        return conjunction_data(
-            n_missed_conj=0, df=pl.DataFrame([], schema=_conj_schema)
-        )
+        return make_empty()
 
 
 # Initial setup of the conjunctions data.
@@ -174,7 +185,7 @@ class _data_processor(threading.Thread):
                 self._stop_event.wait(MAX_AGE)
             except Exception:
                 logger.error(
-                    "Exception caught in the data processor thread. Re-trying in 10 seconds.",
+                    "Exception caught in the data processor thread, re-trying in 10 seconds",
                     exc_info=True,
                     stack_info=True,
                 )
