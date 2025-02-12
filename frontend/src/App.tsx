@@ -13,7 +13,7 @@ import {
 } from 'mantine-react-table';
 
 // UI elements.
-import { ActionIcon, Tooltip } from '@mantine/core';
+import { ActionIcon, Tooltip, Box, Text, Stack } from '@mantine/core';
 import { IconRefresh } from '@tabler/icons-react';
 
 // react-query imports.
@@ -27,12 +27,14 @@ import './App.css'
 
 // Conjunction datatype.
 type Conjunction = {
-  norad_id_i: number;
-  norad_id_j: number;
+  norad_ids: string;
+  object_names: string;
   tca: string;
-  tca_pj: number;
   dca: number;
   relative_speed: number;
+  tca_diff: number;
+  dca_diff: number;
+  relative_speed_diff: number;
 };
 
 // Type expected from the conjunctions endpoint in the backend.
@@ -51,11 +53,10 @@ type useGetConjunctionsParams = {
   columnFilters: MRT_ColumnFiltersState;
   sorting: MRT_SortingState;
   pagination: MRT_PaginationState;
-  globalFilter: string;
 }
 
 // react-query hook to fetch the list of conjunctions from the backend.
-const useGetConjunctions = ({ columnFilterFns, columnFilters, sorting, pagination, globalFilter }: useGetConjunctionsParams) => {
+const useGetConjunctions = ({ columnFilterFns, columnFilters, sorting, pagination }: useGetConjunctionsParams) => {
   // API url.
   const url = 'http://localhost:8000/public_conjunctions/'
 
@@ -67,7 +68,6 @@ const useGetConjunctions = ({ columnFilterFns, columnFilters, sorting, paginatio
     sorting: sorting,
     conjunctions_filter_fns: columnFilterFns,
     conjunctions_filters: columnFilters,
-    global_filter: globalFilter
   };
 
   // Define the function that performs the API call.
@@ -114,40 +114,106 @@ const useGetConjunctions = ({ columnFilterFns, columnFilters, sorting, paginatio
 
 // Function to create the table of conjunctions.
 const ConjunctionsTable = () => {
+  // Allowed predicates for range-based filters.
+  const range_filter_modes = ['greaterThan', 'lessThan', 'between', 'betweenInclusive'];
+
   // Definition of the columns.
   const columns = useMemo<MRT_ColumnDef<Conjunction>[]>(
     () => [
       {
-        accessorKey: 'norad_id_i',
-        header: 'Norad ID i',
-        columnFilterModeOptions: ['equals'],
-        enableFilterMatchHighlighting: true,
+        accessorKey: 'norad_ids',
+        header: 'Norad IDs',
+        columnFilterModeOptions: ['contains'],
+        enableSorting: false,
+        Cell: ({ cell }) => {
+          const [first, second] = cell.getValue<string>().split(" | ");
+
+          return <Stack spacing="xs"><Box sx={(theme) => ({
+            backgroundColor:
+              theme.colors.blue[5],
+            borderRadius: '5px',
+            color: '#fff',
+            textAlign: "center",
+            padding: '2px',
+          })}>
+            <Text size="s" weight={700}>{first}</Text>
+          </Box>
+            <Box sx={(theme) => ({
+              backgroundColor:
+                theme.colors.blue[9],
+              borderRadius: '5px',
+              color: '#fff',
+              textAlign: "center",
+              padding: '2px',
+            })}>
+              <Text size="s" weight={700}>{second}</Text>
+            </Box></Stack>
+        },
       },
       {
-        accessorKey: 'norad_id_j',
-        header: 'Norad ID j',
-        columnFilterModeOptions: ['equals'],
-        enableFilterMatchHighlighting: true,
+        accessorKey: 'object_names',
+        header: 'Names',
+        columnFilterModeOptions: ['contains'],
+        enableSorting: false,
+        Cell: ({ cell }) => {
+          const [first, second] = cell.getValue<string>().split(" | ");
+
+          return <Stack spacing="xs"><Box sx={(theme) => ({
+            backgroundColor:
+              theme.colors.cyan[5],
+            borderRadius: '5px',
+            color: '#fff',
+            textAlign: "center",
+            padding: '2px',
+          })}>
+            <Text size="s" weight={700}>{first}</Text>
+          </Box>
+            <Box sx={(theme) => ({
+              backgroundColor:
+                theme.colors.cyan[9],
+              borderRadius: '5px',
+              color: '#fff',
+              textAlign: "center",
+              padding: '2px',
+            })}>
+              <Text size="s" weight={700}>{second}</Text>
+            </Box></Stack>
+        },
       },
       {
         accessorKey: 'tca',
         header: 'TCA (UTC)',
-        // NOTE: the idea here is to regularise the date representation
-        // by converting it to Date and then back to ISO format.
-        Cell: ({ cell }) => new Date(cell.getValue<string>()).toISOString(),
         enableColumnFilter: false
       },
       {
         accessorKey: 'dca',
         header: 'DCA (km)',
+        columnFilterModeOptions: range_filter_modes,
         Cell: ({ cell }) => cell.getValue<Number>().toPrecision(4),
-        columnFilterModeOptions: ['greaterThan', 'lessThan', 'between', 'betweenInclusive'],
       },
       {
         accessorKey: 'relative_speed',
         header: 'Rel. speed (km/s)',
+        columnFilterModeOptions: range_filter_modes,
         Cell: ({ cell }) => cell.getValue<Number>().toPrecision(4),
-        columnFilterModeOptions: ['greaterThan', 'lessThan', 'between', 'betweenInclusive'],
+      },
+      {
+        accessorKey: 'tca_diff',
+        header: 'TCA diff. (ms)',
+        columnFilterModeOptions: range_filter_modes,
+        Cell: ({ cell }) => cell.getValue<Number>().toPrecision(4),
+      },
+      {
+        accessorKey: 'dca_diff',
+        header: 'DCA diff. (m)',
+        Cell: ({ cell }) => cell.getValue<Number>().toPrecision(4),
+        columnFilterModeOptions: range_filter_modes,
+      },
+      {
+        accessorKey: 'relative_speed_diff',
+        header: 'Rel. speed diff. (m/s)',
+        Cell: ({ cell }) => cell.getValue<Number>().toPrecision(4),
+        columnFilterModeOptions: range_filter_modes,
       },
     ],
     [],
@@ -161,8 +227,10 @@ const ConjunctionsTable = () => {
   const [columnFilterFns, setColumnFilterFns] =
     useState<MRT_ColumnFilterFnsState>(
       {
-        'norad_id_i': 'equals', 'norad_id_j': 'equals',
-        'dca': 'betweenInclusive', 'relative_speed': 'betweenInclusive'
+        'norad_ids': 'contains', 'object_names': 'contains',
+        'dca': 'betweenInclusive', 'relative_speed': 'betweenInclusive',
+        'tca_diff': 'betweenInclusive', 'dca_diff': 'betweenInclusive',
+        'relative_speed_diff': 'betweenInclusive',
       }
     );
   const [sorting, setSorting] = useState<MRT_SortingState>([]);
@@ -170,7 +238,6 @@ const ConjunctionsTable = () => {
     pageIndex: 0,
     pageSize: 10,
   });
-  const [globalFilter, setGlobalFilter] = useState('');
 
   // Call our custom react-query hook to fetch the data from the backend.
   const { data, isError, isFetching, isLoading, refetch } = useGetConjunctions({
@@ -178,7 +245,6 @@ const ConjunctionsTable = () => {
     columnFilters,
     pagination,
     sorting,
-    globalFilter
   });
 
   // Fetch the conjunctions for the current page and the total
@@ -191,7 +257,7 @@ const ConjunctionsTable = () => {
     data: fetchedConjunctions,
     enableColumnFilterModes: true,
     columnFilterModeOptions: [],
-    initialState: { showColumnFilters: true, showGlobalFilter: true },
+    initialState: { showColumnFilters: true, density: 'xs' },
     manualFiltering: true,
     manualPagination: true,
     manualSorting: true,
@@ -221,15 +287,10 @@ const ConjunctionsTable = () => {
       showAlertBanner: isError,
       showProgressBars: isFetching,
       sorting,
-      globalFilter,
     },
     enableColumnDragging: true,
     enableColumnOrdering: true,
-    mantineSearchTextInputProps: {
-      placeholder: 'Search satellites',
-      sx: { minWidth: '300px' },
-    },
-    onGlobalFilterChange: setGlobalFilter,
+    enableGlobalFilter: false
   });
 
   return <MantineReactTable table={table} />;

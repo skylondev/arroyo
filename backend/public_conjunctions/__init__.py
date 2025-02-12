@@ -14,29 +14,15 @@ router = APIRouter(
 def get_conjunctions(
     params: conjunctions_params,
 ) -> Any:
-    _conj = _get_conjunctions()
+    # Fetch the conjunction data.
+    cdata = _get_conjunctions()
 
-    df = _conj.lazy()
+    # Fetch a lazy version of the dataframe.
+    df = cdata.df.lazy()
 
     # If we have filtering to do, we will collect the filtering expressions
     # here and apply them all at once later.
     filters: list[pl.Expr] = []
-
-    # Handle global filtering.
-    if params.global_filter is not None:
-        gf_str = params.global_filter.strip()
-        filters.append(
-            (
-                pl.col("norad_id_i")
-                .cast(str)
-                .str.contains_any([gf_str], ascii_case_insensitive=True)
-            )
-            | (
-                pl.col("norad_id_j")
-                .cast(str)
-                .str.contains_any([gf_str], ascii_case_insensitive=True)
-            )
-        )
 
     # Handle column filtering.
     if params.conjunctions_filters:
@@ -47,12 +33,12 @@ def get_conjunctions(
             filter_f = getattr(params.conjunctions_filter_fns, col)
             filter_v = cur_filter.value
 
-            # The filter values are passed as strings.
+            # The filter values are passed as strings or lists of strings.
             # Try to convert them to the appropriate types based on the column.
             # If the conversion fails, ignore the filter and move to the next column.
             match col:
-                case "norad_id_i" | "norad_id_j":
-                    # Filtering based on exact match of norad IDs.
+                case "norad_ids":
+                    # Filtering based on the exact match of one of the two norad IDs.
                     # We need to convert the filter value to an int.
                     try:
                         norad_id = int(cast(str, filter_v))
@@ -64,12 +50,33 @@ def get_conjunctions(
                         continue
 
                     # Add the filter.
-                    filters.append(pl.col(col) == norad_id)
+                    filters.append(
+                        (pl.col("norad_id_i") == norad_id)
+                        | (pl.col("norad_id_j") == norad_id)
+                    )
 
-                case "dca" | "relative_speed":
+                case "object_names":
+                    # Filtering based on either object name containing a substring.
+                    substr = cast(str, filter_v)
+
+                    filters.append(
+                        (
+                            pl.col("object_name_i").str.contains_any(
+                                [substr], ascii_case_insensitive=True
+                            )
+                        )
+                        | (
+                            pl.col("object_name_j").str.contains_any(
+                                [substr], ascii_case_insensitive=True
+                            )
+                        )
+                    )
+
+                case _:
+                    # In all the other cases, we are dealing with range-based filtering.
                     if isinstance(filter_v, list):
                         # A filter of type 'list' means that the filter function
-                        # is 'between' (possibly inclusive).
+                        # is 'between' or 'between_inclusive'.
 
                         # Attempt to convert the filter value to a list of floats.
                         try:
@@ -111,10 +118,43 @@ def get_conjunctions(
 
         df = df.sort(by=sort_cols, descending=desc)
 
-    # Fetch the requested row range, collect and convert to dicts.
-    rows = df[params.begin : params.begin + params.nrows].collect().to_dicts()
+    # Fetch the requested row range.
+    sub_df = df[params.begin : params.begin + params.nrows]
 
-    return {
+    # Compress the norad id columns into a single string column.
+    sub_df = sub_df.with_columns(
+        pl.concat_str(
+            pl.col("norad_id_i").cast(str),
+            pl.col("norad_id_j").cast(str),
+            separator=" | ",
+        ).alias("norad_ids")
+    ).drop("norad_id_i", "norad_id_j")
+
+    # Compress object names and statuses into a single column.
+    sub_df = sub_df.with_columns(
+        pl.concat_str(
+            # NOTE: it is important to avoid nulls here, otherwise
+            # we break the schema of the response.
+            pl.col("object_name_i").fill_null(pl.lit("unknown"))
+            + " ["
+            # NOTE: ops statuses are guaranteed not to be null.
+            + pl.col("ops_status_i")
+            + "]",
+            pl.col("object_name_j").fill_null(pl.lit("unknown"))
+            + " ["
+            + pl.col("ops_status_j")
+            + "]",
+            separator=" | ",
+        ).alias("object_names")
+    ).drop("object_name_i", "ops_status_i", "object_name_j", "ops_status_j")
+
+    # Convert the tca column to UTC ISO string with ms precision.
+    sub_df = sub_df.with_columns(pl.col("tca").dt.strftime("%Y-%m-%dT%H:%M:%S.%3fZ"))
+
+    # Collect and convert to dicts the requested row range.
+    rows = sub_df.collect().to_dicts()
+
+    ret = {
         "rows": rows,
         # NOTE: this is a contraption to compute the length of a lazy dataframe:
         #
@@ -125,3 +165,5 @@ def get_conjunctions(
         # in the dataframe.
         "tot_nrows": df.select(pl.len()).collect().item(),
     }
+
+    return ret

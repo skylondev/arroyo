@@ -1,22 +1,24 @@
-import datetime
 from pydantic import BaseModel, Field, model_validator
-from typing import Literal, Annotated, Self
+from typing import Literal, Annotated, Self, TypeAlias
 from enum import Enum
 
 
-# NOTE: this represents a single row in the conjunctions table.
+# NOTE: this represents a single row in the conjunctions table
+# that is sent to the frontend.
 class conjunction(BaseModel):
-    norad_id_i: int = Field(..., ge=0)
-    norad_id_j: int = Field(..., ge=0)
-    tca: datetime.datetime
-    tca_pj: float
+    norad_ids: str
+    object_names: str
+    tca: str
     dca: float
     relative_speed: float
+    tca_diff: float
+    dca_diff: float
+    relative_speed_diff: float
 
 
 # NOTE: this is the response that will be sent to the frontend.
-# It consists of the list of conjunctions to be visualised in the current
-# page plus the total number of conjunctions.
+# It consists of the list of conjunctions to be visualised
+# plus the total number of conjunctions.
 class conjunctions(BaseModel):
     rows: list[conjunction]
     tot_nrows: int = Field(..., ge=0)
@@ -27,57 +29,79 @@ class conjunctions(BaseModel):
 # the sorting should be descending.
 class column_sort(BaseModel):
     desc: bool
-    # NOTE: Here we would prefer to in general to fetch the list of fields from the
-    # conjunction model, but it looks like for static checking/validation we cannot
-    # pass a dynamically-computed list of strings.
-    id: Literal["norad_id_i", "norad_id_j", "tca", "tca_pj", "dca", "relative_speed"]
+    # NOTE: these are the columns with respect to which we allow sorting.
+    id: Literal[
+        "tca", "dca", "relative_speed", "tca_diff", "dca_diff", "relative_speed_diff"
+    ]
 
 
-norad_id_filter_fns = Literal["equals"]
-
-
-# NOTE: use enum in place of Literal so that we can fetch
-# the enumerations at runtime.
+# NOTE: these are the allowed range-based predicates.
 class range_filter_fns(Enum):
     # NOTE: camel case on the strings here as they are
-    # coming from the frontend.
+    # coming from a javascript library in the frontend.
     greater_than = "greaterThan"
     less_than = "lessThan"
     between = "between"
     between_inclusive = "betweenInclusive"
 
 
-dca_filter_fns = range_filter_fns
-relative_speed_filter_fns = range_filter_fns
-
-
+# Definition of the allowed filter predicates for each column.
 class conjunctions_filter_fns(BaseModel):
-    norad_id_i: norad_id_filter_fns
-    norad_id_j: norad_id_filter_fns
-    dca: dca_filter_fns
-    relative_speed: relative_speed_filter_fns
+    # NOTE: filtering on norad ids and object names is restricted
+    # to the 'contains' predicate.
+    norad_ids: Literal["contains"]
+    object_names: Literal["contains"]
+    # NOTE: the other columns (except for tca) allow for range-based filtering.
+    dca: range_filter_fns
+    relative_speed: range_filter_fns
+    tca_diff: range_filter_fns
+    dca_diff: range_filter_fns
+    relative_speed_diff: range_filter_fns
 
 
-class norad_id_i_filter(BaseModel):
-    id: Literal["norad_id_i"]
+# Definition of the filter values.
+class norad_ids_filter(BaseModel):
+    id: Literal["norad_ids"]
     value: str
 
 
-class norad_id_j_filter(BaseModel):
-    id: Literal["norad_id_j"]
+class object_names_filter(BaseModel):
+    id: Literal["object_names"]
     value: str
+
+
+# NOTE: this is the value that is passed in the range-based filters.
+range_based_fv: TypeAlias = (
+    Annotated[list[str | None], Field(min_length=2, max_length=2)] | str
+)
 
 
 class dca_filter(BaseModel):
     id: Literal["dca"]
-    value: Annotated[list[str | None], Field(min_length=2, max_length=2)] | str
+    value: range_based_fv
 
 
 class relative_speed_filter(BaseModel):
     id: Literal["relative_speed"]
-    value: Annotated[list[str | None], Field(min_length=2, max_length=2)] | str
+    value: range_based_fv
 
 
+class tca_diff_filter(BaseModel):
+    id: Literal["tca_diff"]
+    value: range_based_fv
+
+
+class dca_diff_filter(BaseModel):
+    id: Literal["dca_diff"]
+    value: range_based_fv
+
+
+class relative_speed_diff_filter(BaseModel):
+    id: Literal["relative_speed_diff"]
+    value: range_based_fv
+
+
+# NOTE: this is the data sent by the frontend.
 class conjunctions_params(BaseModel):
     model_config = {"extra": "forbid"}
 
@@ -86,9 +110,14 @@ class conjunctions_params(BaseModel):
     sorting: list[column_sort]
     conjunctions_filter_fns: conjunctions_filter_fns
     conjunctions_filters: list[
-        norad_id_i_filter | norad_id_j_filter | dca_filter | relative_speed_filter
+        norad_ids_filter
+        | object_names_filter
+        | dca_filter
+        | relative_speed_filter
+        | tca_diff_filter
+        | dca_diff_filter
+        | relative_speed_diff_filter
     ]
-    global_filter: str | None = None
 
     @model_validator(mode="after")
     def check_unique_filter_ids(self) -> Self:
@@ -102,11 +131,17 @@ class conjunctions_params(BaseModel):
 
     @model_validator(mode="after")
     def check_filters_consistency(self) -> Self:
-        # For the DCA and relative speed filters, we have to
+        # For the range-based filters, we have to
         # make sure that the selected filter function is consistent
         # with the filter.
         for flt in self.conjunctions_filters:
-            if flt.id in ["dca", "relative_speed"]:
+            if flt.id in [
+                "dca",
+                "relative_speed",
+                "tca_diff",
+                "dca_diff",
+                "relative_speed_diff",
+            ]:
                 cur_flt_fn = getattr(self.conjunctions_filter_fns, flt.id)
 
                 if cur_flt_fn in [
@@ -121,7 +156,7 @@ class conjunctions_params(BaseModel):
                         )
                 else:
                     # The filter function is 'less_than'/'greater_than':
-                    # the filter value must be a list.
+                    # the filter value must be a string.
                     if not isinstance(flt.value, str):
                         raise ValueError(
                             f"A non-string filter value was detected for the '{cur_flt_fn}' filter function"
