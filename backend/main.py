@@ -18,6 +18,20 @@ from . import public_conjunctions
 # in order to quench mypy warnings.
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> Any:
+    # NOTE: this is a workaround for an issue
+    # in erfa, which could in principle lead to
+    # crashes in case astropy UTC/TAI conversions
+    # are performed in a multithreaded context:
+    #
+    # https://github.com/liberfa/erfa/issues/103
+    #
+    # By triggering a UTC->TAI conversion at startup
+    # time, we are at least ensuring that the builtin
+    # leap seconds table has been correctly initialised.
+    from astropy.time import Time  # type: ignore
+
+    Time(2460669.0, format="jd", scale="utc").tai
+
     logger = logging.getLogger("arroyo")
 
     # Start the data processor thread.
