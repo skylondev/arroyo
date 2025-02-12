@@ -3,9 +3,9 @@ import threading
 import pathlib
 import logging
 import os
-import datetime
 from dataclasses import dataclass
 import pickle
+from astropy.time import Time  # type: ignore
 from ._create_new_conj import _create_new_conj
 
 # Compute the path to the cache dir.
@@ -59,7 +59,7 @@ def _conj_init_setup() -> conjunction_data:
         assert _conj_path.is_file()
 
         logger.debug(
-            f"Existing conjunctions data with UTC mtime {datetime.datetime.utcfromtimestamp(os.path.getmtime(_conj_path))} found on startup"
+            f"Existing conjunctions data with UTC mtime {Time(val=os.path.getmtime(_conj_path), format='unix').utc.iso} found on startup"
         )
 
         try:
@@ -137,10 +137,8 @@ class _data_processor(threading.Thread):
                 if _conj_path.exists():
                     # The conjunctions data file exists, fetch its modification time
                     # and determine its age in seconds.
-                    conj_mtime = datetime.datetime.utcfromtimestamp(
-                        os.path.getmtime(_conj_path)
-                    )
-                    conj_age = (datetime.datetime.utcnow() - conj_mtime).total_seconds()
+                    conj_mtime = Time(val=os.path.getmtime(_conj_path), format="unix")
+                    conj_age = (Time.now() - conj_mtime).to_value("s")
 
                 if conj_age and conj_age < MAX_AGE:
                     # The existing conjunctions data is fresh enough, go to sleep
