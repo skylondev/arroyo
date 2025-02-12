@@ -1,11 +1,9 @@
 import logging
 import os
+import mizuba as mz  # type: ignore
 
 # Create the logger.
 logger = logging.getLogger("arroyo")
-
-if os.getenv("ARROYO_BACKEND_DEVELOPMENT") is not None:
-    logger.setLevel(logging.DEBUG)
 
 # Set up the formatter.
 formatter = logging.Formatter(
@@ -19,3 +17,9 @@ c_handler.setFormatter(formatter)
 
 # Link handler to logger.
 logger.addHandler(c_handler)
+
+# Activate verbose output in development mode.
+if os.getenv("ARROYO_BACKEND_DEVELOPMENT") is not None:
+    logger.setLevel(logging.DEBUG)
+    logging.getLogger("mizuba").setLevel(logging.DEBUG)
+    mz.set_logger_level_trace()

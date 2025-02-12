@@ -431,5 +431,11 @@ def _create_new_conj() -> tuple[int, pl.DataFrame]:
     # Run conjunction detection.
     cj = mz.conjunctions(pj, 5.0, 3.0 / 1440.0)
 
+    logger.debug("Creating new conjunctions dataframe")
+
     # Construct and return the conjunctions dataframe.
-    return _create_mz_conj(cj, norad_ids, satcat_fut.result(), soc_df)
+    ret = _create_mz_conj(cj, norad_ids, satcat_fut.result(), soc_df)
+
+    logger.debug("New conjunctions dataframe created")
+
+    return ret
