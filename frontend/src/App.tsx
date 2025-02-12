@@ -257,7 +257,7 @@ const ConjunctionsTable = () => {
     data: fetchedConjunctions,
     enableColumnFilterModes: true,
     columnFilterModeOptions: [],
-    initialState: { showColumnFilters: true, density: 'xs' },
+    initialState: { density: 'xs' },
     manualFiltering: true,
     manualPagination: true,
     manualSorting: true,
