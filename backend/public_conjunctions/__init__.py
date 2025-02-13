@@ -3,6 +3,7 @@ from ._data import _get_conjunctions
 from typing import Any, cast
 from ._models import conjunctions_params, conjunctions, range_filter_fns
 import polars as pl
+import logging
 
 router = APIRouter(
     prefix="/public_conjunctions",
@@ -14,6 +15,10 @@ router = APIRouter(
 def get_conjunctions(
     params: conjunctions_params,
 ) -> Any:
+    logger = logging.getLogger("arroyo")
+
+    logger.debug("Processing get_conjunctions() request")
+
     # Fetch the conjunction data.
     cdata = _get_conjunctions()
 
@@ -156,5 +161,7 @@ def get_conjunctions(
         # in the dataframe.
         "tot_nrows": df.select(pl.len()).collect().item(),
     }
+
+    logger.debug("get_conjunctions() request processed")
 
     return ret
