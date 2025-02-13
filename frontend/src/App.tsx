@@ -308,6 +308,9 @@ const ConjunctionsTable = () => {
     mantineTableHeadCellProps: {
       align: 'center',
     },
+    mantineTableBodyCellProps: {
+      align: 'center',
+    },
     enableColumnResizing: true,
   });
 
