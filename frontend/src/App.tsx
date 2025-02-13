@@ -93,7 +93,7 @@ const useGetConjunctions = ({ columnFilterFns, columnFilters, sorting, paginatio
       return Promise.reject(error);
     }
 
-    return responseData;
+    return responseData as ConjunctionApiResponse;
   };
 
   // NOTE: what this does is essentially adding a few features on top of just
@@ -123,7 +123,9 @@ const ConjunctionsTable = () => {
       {
         accessorKey: 'norad_ids',
         header: 'Norad IDs',
+        Header: <Text style={{ textAlign: 'center' }}>Norad<br />IDs</Text>,
         columnFilterModeOptions: ['contains'],
+        size: 60,
         enableSorting: false,
         Cell: ({ cell }) => {
           const [first, second] = cell.getValue<string>().split(" | ");
@@ -133,20 +135,18 @@ const ConjunctionsTable = () => {
               theme.colors.blue[5],
             borderRadius: '5px',
             color: '#fff',
-            textAlign: "center",
             padding: '2px',
           })}>
-            <Text size="s" weight={700}>{first}</Text>
+            <Text size="l" weight={700}>{first}</Text>
           </Box>
             <Box sx={(theme) => ({
               backgroundColor:
                 theme.colors.blue[9],
               borderRadius: '5px',
               color: '#fff',
-              textAlign: "center",
               padding: '2px',
             })}>
-              <Text size="s" weight={700}>{second}</Text>
+              <Text size="l" weight={700}>{second}</Text>
             </Box></Stack>
         },
       },
@@ -154,6 +154,7 @@ const ConjunctionsTable = () => {
         accessorKey: 'object_names',
         header: 'Names',
         columnFilterModeOptions: ['contains'],
+        size: 140,
         enableSorting: false,
         Cell: ({ cell }) => {
           const [first, second] = cell.getValue<string>().split(" | ");
@@ -163,7 +164,6 @@ const ConjunctionsTable = () => {
               theme.colors.cyan[5],
             borderRadius: '5px',
             color: '#fff',
-            textAlign: "center",
             padding: '2px',
           })}>
             <Text size="s" weight={700}>{first}</Text>
@@ -173,7 +173,6 @@ const ConjunctionsTable = () => {
                 theme.colors.cyan[9],
               borderRadius: '5px',
               color: '#fff',
-              textAlign: "center",
               padding: '2px',
             })}>
               <Text size="s" weight={700}>{second}</Text>
@@ -183,37 +182,44 @@ const ConjunctionsTable = () => {
       {
         accessorKey: 'tca',
         header: 'TCA (UTC)',
-        enableColumnFilter: false
+        Header: <Text style={{ textAlign: 'center' }}>TCA<br />(UTC)</Text>,
+        enableColumnFilter: false,
+        size: 150,
       },
       {
         accessorKey: 'dca',
         header: 'DCA (km)',
+        Header: <Text style={{ textAlign: 'center' }}>DCA<br />(km)</Text>,
         columnFilterModeOptions: range_filter_modes,
         Cell: ({ cell }) => cell.getValue<Number>().toPrecision(4),
       },
       {
         accessorKey: 'relative_speed',
         header: 'Rel. speed (km/s)',
+        Header: <Text style={{ textAlign: 'center' }}>Rel. speed<br />(km/s)</Text>,
         columnFilterModeOptions: range_filter_modes,
         Cell: ({ cell }) => cell.getValue<Number>().toPrecision(4),
       },
       {
         accessorKey: 'tca_diff',
         header: 'TCA diff. (ms)',
+        Header: <Text style={{ textAlign: 'center' }}>TCA diff.<br />(ms)</Text>,
         columnFilterModeOptions: range_filter_modes,
         Cell: ({ cell }) => cell.getValue<Number>().toPrecision(4),
       },
       {
         accessorKey: 'dca_diff',
         header: 'DCA diff. (m)',
-        Cell: ({ cell }) => cell.getValue<Number>().toPrecision(4),
+        Header: <Text style={{ textAlign: 'center' }}>DCA diff.<br />(m)</Text>,
         columnFilterModeOptions: range_filter_modes,
+        Cell: ({ cell }) => cell.getValue<Number>().toPrecision(4),
       },
       {
         accessorKey: 'relative_speed_diff',
         header: 'Rel. speed diff. (m/s)',
-        Cell: ({ cell }) => cell.getValue<Number>().toPrecision(4),
+        Header: <Text style={{ textAlign: 'center' }}>Rel. speed diff.<br />(m/s)</Text>,
         columnFilterModeOptions: range_filter_modes,
+        Cell: ({ cell }) => cell.getValue<Number>().toPrecision(4),
       },
     ],
     [],
@@ -288,9 +294,21 @@ const ConjunctionsTable = () => {
       showProgressBars: isFetching,
       sorting,
     },
-    enableColumnDragging: true,
+    enableColumnActions: false,
+    enableColumnDragging: false,
     enableColumnOrdering: true,
-    enableGlobalFilter: false
+    enableGlobalFilter: false,
+    mantineTableContainerProps: {
+      sx: {
+        maxHeight: '1280px',
+      },
+    },
+    enableStickyHeader: true,
+    enableFullScreenToggle: false,
+    mantineTableHeadCellProps: {
+      align: 'center',
+    },
+    enableColumnResizing: true,
   });
 
   return <MantineReactTable table={table} />;
