@@ -287,7 +287,9 @@ def _create_mz_conj_satcat_augment(
     )
 
     # Attach the object names from satcat.
-    # NOTE: for some objects, the name may end up being null.
+    # NOTE: in the joined dataframe, replace all null object names
+    # with 'unknown', otherwise having potentially-null object names complicates
+    # the schema of the response to the frontend.
     cdf = (
         cdf.join(
             satcat.select(["NORAD_CAT_ID", "OBJECT_NAME"]),
@@ -295,7 +297,9 @@ def _create_mz_conj_satcat_augment(
             left_on="norad_id_i",
             right_on="NORAD_CAT_ID",
         )
-        .with_columns(pl.col("OBJECT_NAME").alias("object_name_i"))
+        .with_columns(
+            pl.col("OBJECT_NAME").fill_null(pl.lit("unknown")).alias("object_name_i")
+        )
         .drop("OBJECT_NAME")
     )
     cdf = (
@@ -305,7 +309,9 @@ def _create_mz_conj_satcat_augment(
             left_on="norad_id_j",
             right_on="NORAD_CAT_ID",
         )
-        .with_columns(pl.col("OBJECT_NAME").alias("object_name_j"))
+        .with_columns(
+            pl.col("OBJECT_NAME").fill_null(pl.lit("unknown")).alias("object_name_j")
+        )
         .drop("OBJECT_NAME")
     )
 

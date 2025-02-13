@@ -133,17 +133,8 @@ def get_conjunctions(
     # Compress object names and statuses into a single column.
     sub_df = sub_df.with_columns(
         pl.concat_str(
-            # NOTE: it is important to avoid nulls here, otherwise
-            # we break the schema of the response.
-            pl.col("object_name_i").fill_null(pl.lit("unknown"))
-            + " ["
-            # NOTE: ops statuses are guaranteed not to be null.
-            + pl.col("ops_status_i")
-            + "]",
-            pl.col("object_name_j").fill_null(pl.lit("unknown"))
-            + " ["
-            + pl.col("ops_status_j")
-            + "]",
+            pl.col("object_name_i") + " [" + pl.col("ops_status_i") + "]",
+            pl.col("object_name_j") + " [" + pl.col("ops_status_j") + "]",
             separator=" | ",
         ).alias("object_names")
     ).drop("object_name_i", "ops_status_i", "object_name_j", "ops_status_j")
