@@ -204,7 +204,7 @@ const ConjunctionsTable = () => {
                 cell.getValue<number>() < 0.5
                   ? theme.colors.red[9]
                   : cell.getValue<number>() >= 0.5 &&
-                    cell.getValue<number>() < 2
+                    cell.getValue<number>() < 2.5
                     ? theme.colors.yellow[9]
                     : theme.colors.green[9],
               borderRadius: '5px',
@@ -317,9 +317,9 @@ const ConjunctionsTable = () => {
         <Text size="sm">|</Text>
         <Text size="sm">Last updated: <strong>{data?.conj_ts ?? "N/A"} (UTC)</strong></Text>
         <Text size="sm">|</Text>
-        <Text size="sm">Computation period: <strong>{date_begin} (UTC)</strong> — <strong>{date_end} (UTC)</strong></Text>
+        <Text size="sm">Time interval: <strong>{date_begin} (UTC)</strong> — <strong>{date_end} (UTC)</strong></Text>
         <Text size="sm">|</Text>
-        <Text size="sm">Computation time: <strong>{(data?.comp_time ?? 0).toPrecision(4)}s</strong></Text>
+        <Text size="sm">Runtime: <strong>{(data?.comp_time ?? 0).toPrecision(4)}s</strong></Text>
         <Text size="sm">|</Text>
         <Text size="sm">Missed conjunctions: {missed_conj}</Text>
       </Group>
