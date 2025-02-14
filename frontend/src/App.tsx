@@ -133,7 +133,7 @@ const ConjunctionsTable = () => {
     () => [
       {
         accessorKey: 'norad_ids',
-        header: 'Norad IDs',
+        header: 'Norad ID',
         columnFilterModeOptions: ['contains'],
         size: 60,
         enableSorting: false,
@@ -142,7 +142,7 @@ const ConjunctionsTable = () => {
 
           return <Stack gap="2px"><Box style={(theme) => ({
             backgroundColor:
-              theme.colors.blue[5],
+              theme.colors.blue[9],
             borderRadius: '5px',
             color: '#fff',
             padding: '2px',
@@ -162,7 +162,7 @@ const ConjunctionsTable = () => {
       },
       {
         accessorKey: 'object_names',
-        header: 'Satellites',
+        header: 'Name [status]',
         columnFilterModeOptions: ['contains'],
         enableSorting: false,
         Cell: ({ cell }) => {
@@ -170,7 +170,7 @@ const ConjunctionsTable = () => {
 
           return <Stack gap="2px"><Box style={(theme) => ({
             backgroundColor:
-              theme.colors.indigo[5],
+              theme.colors.indigo[9],
             borderRadius: '5px',
             color: '#fff',
             padding: '2px',
@@ -197,7 +197,24 @@ const ConjunctionsTable = () => {
         accessorKey: 'dca',
         header: 'DCA (km)',
         columnFilterModeOptions: range_filter_modes,
-        Cell: ({ cell }) => cell.getValue<Number>().toPrecision(4),
+        Cell: ({ cell }) => (
+          <Box
+            style={(theme) => ({
+              backgroundColor:
+                cell.getValue<number>() < 0.5
+                  ? theme.colors.red[9]
+                  : cell.getValue<number>() >= 0.5 &&
+                    cell.getValue<number>() < 2
+                    ? theme.colors.yellow[9]
+                    : theme.colors.green[9],
+              borderRadius: '5px',
+              color: '#fff',
+              padding: '4px',
+            })}
+          >
+            {cell.getValue<Number>().toPrecision(4)}
+          </Box>
+        ),
       },
       {
         accessorKey: 'relative_speed',
@@ -207,19 +224,19 @@ const ConjunctionsTable = () => {
       },
       {
         accessorKey: 'tca_diff',
-        header: 'TCA diff. (ms)',
+        header: 'ΔTCA (ms)',
         columnFilterModeOptions: range_filter_modes,
         Cell: ({ cell }) => cell.getValue<Number>().toPrecision(4),
       },
       {
         accessorKey: 'dca_diff',
-        header: 'DCA diff. (m)',
+        header: 'ΔDCA (m)',
         columnFilterModeOptions: range_filter_modes,
         Cell: ({ cell }) => cell.getValue<Number>().toPrecision(4),
       },
       {
         accessorKey: 'relative_speed_diff',
-        header: 'Rel. speed diff. (m/s)',
+        header: 'ΔRel. speed (m/s)',
         columnFilterModeOptions: range_filter_modes,
         Cell: ({ cell }) => cell.getValue<Number>().toPrecision(4),
       },
@@ -262,7 +279,7 @@ const ConjunctionsTable = () => {
 
   // Setup the "missed conjunctions" text element.
   const n_missed_conj = data?.n_missed_conj ?? 0;
-  const missed_conj = <Text component="span" fw={700} size="l" c={n_missed_conj == 0 ? "green.9" : "red.9"}>
+  const missed_conj = <Text component="span" fw={700} size="l" c={n_missed_conj == 0 ? "green.6" : "red.6"}>
     {n_missed_conj}
   </Text>;
 
