@@ -317,7 +317,7 @@ const ConjunctionsTable = () => {
         <Text size="sm">|</Text>
         <Text size="sm">Last updated: <strong>{data?.conj_ts ?? "N/A"} (UTC)</strong></Text>
         <Text size="sm">|</Text>
-        <Text size="sm">Computation period: <strong>{date_begin} (UTC)</strong> -- <strong>{date_end} (UTC)</strong></Text>
+        <Text size="sm">Computation period: <strong>{date_begin} (UTC)</strong> — <strong>{date_end} (UTC)</strong></Text>
         <Text size="sm">|</Text>
         <Text size="sm">Computation time: <strong>{(data?.comp_time ?? 0).toPrecision(4)}s</strong></Text>
         <Text size="sm">|</Text>
