@@ -13,7 +13,7 @@ import {
 } from 'mantine-react-table';
 
 // UI elements.
-import { ActionIcon, Tooltip, Box, Text, Stack } from '@mantine/core';
+import { ActionIcon, Tooltip, Box, Text, Stack, Group } from '@mantine/core';
 import { IconRefresh } from '@tabler/icons-react';
 
 // react-query imports.
@@ -39,10 +39,21 @@ type Conjunction = {
 
 // Type expected from the conjunctions endpoint in the backend.
 type ConjunctionApiResponse = {
-  // The set of conjunctions to be displayed in the current page.
+  // The list of conjunctions to be visualised in the current page.
   rows: Array<Conjunction>,
-  // The total number of conjunctions in the dataframe.
+  // The total number of rows.
   tot_nrows: number;
+  // The total number of conjunctions.
+  tot_nconj: number;
+  // The conjunctions timestamp.
+  conj_ts: string;
+  // The total computation time (in seconds).
+  comp_time: number;
+  // The number of missed conjunctions.
+  n_missed_conj: number;
+  // The time period covered by the computation.
+  date_begin: string;
+  date_end: string;
 }
 
 // Bundle of parameters to be passed to useGetConjunctions(). This contains
@@ -129,7 +140,7 @@ const ConjunctionsTable = () => {
         Cell: ({ cell }) => {
           const [first, second] = cell.getValue<string>().split(" | ");
 
-          return <Stack gap="xs"><Box style={(theme) => ({
+          return <Stack gap="2px"><Box style={(theme) => ({
             backgroundColor:
               theme.colors.blue[5],
             borderRadius: '5px',
@@ -151,15 +162,15 @@ const ConjunctionsTable = () => {
       },
       {
         accessorKey: 'object_names',
-        header: 'Names',
+        header: 'Satellites',
         columnFilterModeOptions: ['contains'],
         enableSorting: false,
         Cell: ({ cell }) => {
           const [first, second] = cell.getValue<string>().split(" | ");
 
-          return <Stack gap="xs"><Box style={(theme) => ({
+          return <Stack gap="2px"><Box style={(theme) => ({
             backgroundColor:
-              theme.colors.cyan[5],
+              theme.colors.indigo[5],
             borderRadius: '5px',
             color: '#fff',
             padding: '2px',
@@ -168,7 +179,7 @@ const ConjunctionsTable = () => {
           </Box>
             <Box style={(theme) => ({
               backgroundColor:
-                theme.colors.cyan[9],
+                theme.colors.indigo[9],
               borderRadius: '5px',
               color: '#fff',
               padding: '2px',
@@ -225,9 +236,9 @@ const ConjunctionsTable = () => {
     useState<MRT_ColumnFilterFnsState>(
       {
         'norad_ids': 'contains', 'object_names': 'contains',
-        'dca': 'betweenInclusive', 'relative_speed': 'betweenInclusive',
-        'tca_diff': 'betweenInclusive', 'dca_diff': 'betweenInclusive',
-        'relative_speed_diff': 'betweenInclusive',
+        'dca': 'lessThan', 'relative_speed': 'lessThan',
+        'tca_diff': 'lessThan', 'dca_diff': 'lessThan',
+        'relative_speed_diff': 'lessThan',
       }
     );
   const [sorting, setSorting] = useState<MRT_SortingState>([]);
@@ -249,6 +260,16 @@ const ConjunctionsTable = () => {
   const fetchedConjunctions = data?.rows ?? [];
   const totalRowCount = data?.tot_nrows ?? 0;
 
+  // Setup the "missed conjunctions" text element.
+  const n_missed_conj = data?.n_missed_conj ?? 0;
+  const missed_conj = <Text component="span" fw={700} size="l" c={n_missed_conj == 0 ? "green.9" : "red.9"}>
+    {n_missed_conj}
+  </Text>;
+
+  // Fetch date_begin/date_end.
+  const date_begin = data?.date_begin ?? "N/A";
+  const date_end = data?.date_end ?? "N/A";
+
   const table = useMantineReactTable({
     columns,
     data: fetchedConjunctions,
@@ -269,11 +290,22 @@ const ConjunctionsTable = () => {
     onPaginationChange: setPagination,
     onSortingChange: setSorting,
     renderTopToolbarCustomActions: () => (
-      <Tooltip label="Refresh Data">
-        <ActionIcon onClick={() => refetch()}>
-          <IconRefresh />
-        </ActionIcon>
-      </Tooltip>
+      <Group>
+        <Tooltip label="Refresh Data">
+          <ActionIcon onClick={() => refetch()} size='l'>
+            <IconRefresh />
+          </ActionIcon>
+        </Tooltip>
+        <Text size="sm">Total conjunctions: <strong>{data?.tot_nconj ?? 0}</strong></Text>
+        <Text size="sm">|</Text>
+        <Text size="sm">Last updated: <strong>{data?.conj_ts ?? "N/A"} (UTC)</strong></Text>
+        <Text size="sm">|</Text>
+        <Text size="sm">Computation period: <strong>{date_begin} (UTC)</strong> -- <strong>{date_end} (UTC)</strong></Text>
+        <Text size="sm">|</Text>
+        <Text size="sm">Computation time: <strong>{(data?.comp_time ?? 0).toPrecision(4)}s</strong></Text>
+        <Text size="sm">|</Text>
+        <Text size="sm">Missed conjunctions: {missed_conj}</Text>
+      </Group>
     ),
     rowCount: totalRowCount,
     state: {

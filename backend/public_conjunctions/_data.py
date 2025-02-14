@@ -3,7 +3,7 @@ import threading
 import pathlib
 import logging
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import pickle
 from astropy.time import Time  # type: ignore
 from ._create_new_conj import _create_new_conj
@@ -38,19 +38,19 @@ _conj_schema = pl.Schema(
 # Conjunctions data class.
 @dataclass
 class conjunction_data:
-    n_missed_conj: int
-    df: pl.DataFrame
+    n_missed_conj: int = 0
+    df: pl.DataFrame = field(
+        default_factory=lambda: pl.DataFrame([], schema=_conj_schema)
+    )
+    timestamp: str | None = None
+    comp_time: float = 0
+    date_begin: str | None = None
+    date_end: str | None = None
 
 
 # Helper for the initial setup of the conjunctions data.
 def _conj_init_setup() -> conjunction_data:
     logger = logging.getLogger("arroyo")
-
-    # Helper to create empty conjunction data.
-    def make_empty() -> conjunction_data:
-        return conjunction_data(
-            n_missed_conj=0, df=pl.DataFrame([], schema=_conj_schema)
-        )
 
     # Check if we have existing data in the cache.
     if _conj_path.exists():
@@ -72,7 +72,7 @@ def _conj_init_setup() -> conjunction_data:
                 stack_info=True,
             )
 
-            return make_empty()
+            return conjunction_data()
 
         if ret.df.schema != _conj_schema:
             # Schema mismatch.
@@ -84,7 +84,7 @@ def _conj_init_setup() -> conjunction_data:
             _conj_path.unlink()
 
             # Return empty data.
-            return make_empty()
+            return conjunction_data()
 
         return ret
     else:
@@ -93,7 +93,7 @@ def _conj_init_setup() -> conjunction_data:
             "No existing conjunctions data found on startup, initialising empty data"
         )
 
-        return make_empty()
+        return conjunction_data()
 
 
 # Initial setup of the conjunctions data.
@@ -161,23 +161,49 @@ class _data_processor(threading.Thread):
                         "No conjunctions data found in the cache, creating new data"
                     )
 
-                # We need new conjunctions data. Create it.
-                n_missed_conj, df = _create_new_conj()
+                # We need new conjunctions data. Create it, with timing.
+                ts_start = Time.now()
+                n_missed_conj, df, date_begin, date_end = _create_new_conj()
                 assert df.schema == _conj_schema
-                cdata = conjunction_data(n_missed_conj=n_missed_conj, df=df)
+                ts_stop = Time.now()
 
-                # Assign it.
-                _set_conjunctions(cdata)
+                # Calculate the computation time.
+                comp_time = (ts_stop - ts_start).to_value("s")
 
-                logger.debug("New conjunctions data successfully created and assigned")
+                # Change precisions for string conversions.
+                ts_stop.precision = 0
+                date_begin.precision = 0
+                date_end.precision = 0
+
+                # Build the conjunctions dataclass.
+                cdata = conjunction_data(
+                    n_missed_conj=n_missed_conj,
+                    df=df,
+                    timestamp=ts_stop.utc.iso,
+                    comp_time=comp_time,
+                    date_begin=date_begin.utc.iso,
+                    date_end=date_end.utc.iso,
+                )
+
+                logger.debug("New conjunctions data successfully created")
 
                 # Save it into the cache.
+                # NOTE: it is *important* to do this *before* invoking _set_conjunctions(),
+                # otherwise we may end up pickling a dataframe while we are operating on it
+                # from another thread (i.e., from the public_conjunctions endpoint).
+                # This results in "RuntimeError: Already mutably borrowed" errors and possibly
+                # worse, as I am not sure what goes on exactly with the pickling...
                 with open(_conj_path, "wb") as f:
                     pickle.dump(cdata, f)
 
                 logger.debug(
                     f"New conjunctions data successfully saved into the cache at '{_conj_path}'"
                 )
+
+                # Assign it.
+                _set_conjunctions(cdata)
+
+                logger.debug("New conjunctions data successfully assigned")
 
                 logger.debug(f"Sleeping for {MAX_AGE}s")
                 self._stop_event.wait(MAX_AGE)

@@ -398,7 +398,7 @@ def _create_mz_conj(
 
 
 # Main function to create a new conjunctions dataframe.
-def _create_new_conj() -> tuple[int, pl.DataFrame]:
+def _create_new_conj() -> tuple[int, pl.DataFrame, Time, Time]:
     logger = logging.getLogger("arroyo")
 
     # Fetch the data from celestrak.
@@ -444,4 +444,4 @@ def _create_new_conj() -> tuple[int, pl.DataFrame]:
 
     logger.debug("New conjunctions dataframe created")
 
-    return ret
+    return *ret, date_begin, date_end

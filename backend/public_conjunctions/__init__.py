@@ -22,8 +22,9 @@ def get_conjunctions(
     # Fetch the conjunction data.
     cdata = _get_conjunctions()
 
-    # Fetch a lazy version of the dataframe.
-    df = cdata.df.lazy()
+    # Fetch the dataframe and a lazy version of it.
+    conj = cdata.df
+    df = conj.lazy()
 
     # If we have filtering to do, we will collect the filtering expressions
     # here and apply them all at once later.
@@ -145,7 +146,7 @@ def get_conjunctions(
     ).drop("object_name_i", "ops_status_i", "object_name_j", "ops_status_j")
 
     # Convert the tca column to UTC ISO string with ms precision.
-    sub_df = sub_df.with_columns(pl.col("tca").dt.strftime("%Y-%m-%dT%H:%M:%S.%3fZ"))
+    sub_df = sub_df.with_columns(pl.col("tca").dt.strftime("%Y-%m-%d %H:%M:%S.%3f"))
 
     # Collect and convert to dicts the requested row range.
     rows = sub_df.collect().to_dicts()
@@ -156,10 +157,15 @@ def get_conjunctions(
         #
         # https://stackoverflow.com/questions/75523498/python-polars-how-to-get-the-row-count-of-a-lazyframe
         #
-        # It is important that we do this instead of just len(_conj)
-        # because the filtering may have changed the total number of rows
-        # in the dataframe.
+        # It is important that we do this instead of just len(conj)
+        # in order to account for filtering.
         "tot_nrows": df.select(pl.len()).collect().item(),
+        "tot_nconj": len(conj),
+        "conj_ts": cdata.timestamp,
+        "comp_time": cdata.comp_time,
+        "n_missed_conj": cdata.n_missed_conj,
+        "date_begin": cdata.date_begin,
+        "date_end": cdata.date_end,
     }
 
     logger.debug("get_conjunctions() request processed")
