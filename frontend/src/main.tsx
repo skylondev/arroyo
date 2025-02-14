@@ -9,8 +9,8 @@ import App from './App.tsx'
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <MantineProvider theme={{
-      primaryColor: "blue",
-    }} defaultColorScheme="light">
+      primaryColor: "teal",
+    }} defaultColorScheme="dark">
       <App />
     </MantineProvider>
   </StrictMode>,
