@@ -162,7 +162,7 @@ const ConjunctionsTable = () => {
       },
       {
         accessorKey: 'object_names',
-        header: 'Name [status]',
+        header: 'Name',
         columnFilterModeOptions: ['contains'],
         enableSorting: false,
         Cell: ({ cell }) => {
