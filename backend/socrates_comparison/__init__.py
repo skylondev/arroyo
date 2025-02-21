@@ -1,7 +1,8 @@
 from fastapi import APIRouter
 from ._data import _get_conjunctions
 from typing import Any, cast
-from ._models import conjunctions_params, conjunctions, range_filter_fns
+from ._response_models import conjunctions
+from ._request_models import conjunctions_params, range_filter_fns
 import polars as pl
 import logging
 

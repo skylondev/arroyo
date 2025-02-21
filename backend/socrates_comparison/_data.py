@@ -127,7 +127,7 @@ class _data_processor(threading.Thread):
     def run(self) -> None:
         logger = logging.getLogger("arroyo")
 
-        logger.debug("Data processor thread started")
+        logger.debug("socrates_comparison data processor thread started")
 
         # Maximum age for the conjunctions data (in seconds).
         MAX_AGE = 4 * 3600
