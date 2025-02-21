@@ -4,8 +4,10 @@ from enum import Enum
 
 
 # NOTE: this is sent by the frontend. It represents a single column with
-# respect to which the sorting will take place and whether or not
-# the sorting should be descending.
+# respect to which sorting will take place and whether or not
+# the sorting should be descending. The frontend may send multiple
+# instances of column_sort packed in an array, signalling sorting by
+# multiple criteria.
 class column_sort(BaseModel):
     desc: bool
     # NOTE: these are the columns with respect to which we allow sorting.
@@ -24,7 +26,7 @@ class range_filter_fns(Enum):
     between_inclusive = "betweenInclusive"
 
 
-# Definition of the allowed filter predicates for each column.
+# The allowed filter predicates for each column wrt which we allow sorting.
 class filter_fns(BaseModel):
     # NOTE: filtering on norad ids and object names is restricted
     # to the 'contains' predicate.
@@ -38,7 +40,7 @@ class filter_fns(BaseModel):
     relative_speed_diff: range_filter_fns
 
 
-# Definition of the filter values.
+# The filter values for each column wrt which we allow sorting.
 class norad_ids_filter(BaseModel):
     id: Literal["norad_ids"]
     value: str
@@ -86,8 +88,15 @@ class request(BaseModel):
 
     begin: int = Field(..., ge=0)
     nrows: int = Field(..., ge=0, le=500)
+    # NOTE: this may be an empty array but it will never be null.
     sorting: list[column_sort]
+    # NOTE: the full set of filter functions for all columns
+    # is always sent. This indicates what type of filtering is desired
+    # for each column, even if no filtering is actually active.
     filter_fns: filter_fns
+    # NOTE: for each *active* filter, we get a filter value (which contains
+    # what the user has inputted in the filter box). If no filter
+    # is active, this will be an empty array.
     filters: list[
         norad_ids_filter
         | object_names_filter
@@ -112,7 +121,7 @@ class request(BaseModel):
     def check_filters_consistency(self) -> Self:
         # For the range-based filters, we have to
         # make sure that the selected filter function is consistent
-        # with the filter.
+        # with the filter value.
         for flt in self.filters:
             if flt.id in [
                 "dca",
