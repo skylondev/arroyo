@@ -8,8 +8,8 @@ import pickle
 from astropy.time import Time  # type: ignore
 from ._create_new_conj import _create_new_conj
 
-# Compute the path to the cache dir.
-_cache_dir = pathlib.Path(__file__).parent.parent / "cache"
+# Determine the absolute path to the cache dir.
+_cache_dir = (pathlib.Path(__file__).parent.parent / "cache").resolve()
 
 assert _cache_dir.is_dir()
 
