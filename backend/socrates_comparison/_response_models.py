@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field
 
 # NOTE: this represents a single row in the conjunctions table
 # that is sent to the frontend.
-class single_conjunction(BaseModel):
+class single_row(BaseModel):
     norad_ids: str
     object_names: str
     tca: str
@@ -15,9 +15,9 @@ class single_conjunction(BaseModel):
 
 
 # NOTE: this is the response that will be sent to the frontend.
-class conjunctions(BaseModel):
+class response(BaseModel):
     # The list of conjunctions to be visualised in the current page.
-    rows: list[single_conjunction]
+    rows: list[single_row]
     # The total number of rows.
     tot_nrows: int = Field(..., ge=0)
     # The total number of conjunctions.

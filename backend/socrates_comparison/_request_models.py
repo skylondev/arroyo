@@ -81,14 +81,14 @@ class relative_speed_diff_filter(BaseModel):
 
 
 # NOTE: this is the data sent by the frontend.
-class conjunctions_params(BaseModel):
+class request(BaseModel):
     model_config = {"extra": "forbid"}
 
     begin: int = Field(..., ge=0)
     nrows: int = Field(..., ge=0, le=500)
     sorting: list[column_sort]
     filter_fns: filter_fns
-    conjunctions_filters: list[
+    filters: list[
         norad_ids_filter
         | object_names_filter
         | dca_filter
@@ -100,11 +100,11 @@ class conjunctions_params(BaseModel):
 
     @model_validator(mode="after")
     def check_unique_filter_ids(self) -> Self:
-        # The ids in conjunctions_filters must be unique (that is,
+        # The ids in filters must be unique (that is,
         # we cannot be applying two filters to the same column).
-        id_list = list(_.id for _ in self.conjunctions_filters)
+        id_list = list(_.id for _ in self.filters)
         if len(set(id_list)) != len(id_list):
-            raise ValueError("The list of ids in 'conjunctions_filters' must be unique")
+            raise ValueError("The list of ids in 'filters' must be unique")
 
         return self
 
@@ -113,7 +113,7 @@ class conjunctions_params(BaseModel):
         # For the range-based filters, we have to
         # make sure that the selected filter function is consistent
         # with the filter.
-        for flt in self.conjunctions_filters:
+        for flt in self.filters:
             if flt.id in [
                 "dca",
                 "relative_speed",

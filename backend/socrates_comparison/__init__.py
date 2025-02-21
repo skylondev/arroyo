@@ -1,8 +1,8 @@
 from fastapi import APIRouter
 from ._data import _get_conjunctions
 from typing import Any, cast
-from ._response_models import conjunctions
-from ._request_models import conjunctions_params, range_filter_fns
+from ._response_models import response
+from ._request_models import request, range_filter_fns
 import polars as pl
 import logging
 
@@ -12,9 +12,9 @@ router = APIRouter(
 )
 
 
-@router.post("/", response_model=conjunctions)
+@router.post("/", response_model=response)
 def get_conjunctions(
-    params: conjunctions_params,
+    params: request,
 ) -> Any:
     logger = logging.getLogger("arroyo")
 
@@ -32,12 +32,12 @@ def get_conjunctions(
     filters: list[pl.Expr] = []
 
     # Handle column filtering.
-    if params.conjunctions_filters:
-        for cur_filter in params.conjunctions_filters:
+    if params.filters:
+        for cur_filter in params.filters:
             # Extract the column's name, the filter function
             # and the filter value.
             col = cur_filter.id
-            filter_f = getattr(params.conjunctions_filter_fns, col)
+            filter_f = getattr(params.filter_fns, col)
             filter_v = cur_filter.value
 
             # The filter values are passed as strings or lists of strings.

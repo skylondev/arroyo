@@ -78,7 +78,7 @@ const useGetConjunctions = ({ columnFilterFns, columnFilters, sorting, paginatio
     nrows: pagination.pageSize,
     sorting: sorting,
     filter_fns: columnFilterFns,
-    conjunctions_filters: columnFilters,
+    filters: columnFilters,
   };
 
   // Define the function that performs the API call.
