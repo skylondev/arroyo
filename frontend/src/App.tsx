@@ -69,7 +69,7 @@ type useGetConjunctionsParams = {
 // react-query hook to fetch the list of conjunctions from the backend.
 const useGetConjunctions = ({ columnFilterFns, columnFilters, sorting, pagination }: useGetConjunctionsParams) => {
   // API url.
-  const url = 'http://localhost:8000/public_conjunctions/'
+  const url = 'http://localhost:8000/socrates_comparison/'
 
   // The body for the POST request. Here we are setting all the parameters
   // to be passed to the backend.

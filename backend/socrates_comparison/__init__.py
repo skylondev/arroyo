@@ -6,8 +6,8 @@ import polars as pl
 import logging
 
 router = APIRouter(
-    prefix="/public_conjunctions",
-    tags=["public_conjunctions"],
+    prefix="/socrates_comparison",
+    tags=["socrates_comparison"],
 )
 
 

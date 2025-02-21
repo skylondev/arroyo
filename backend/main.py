@@ -7,10 +7,10 @@ from contextlib import asynccontextmanager
 # NOTE: import _logging first so that we trigger the creation
 # of the logger.
 from . import _logging  # noqa
-from . import public_conjunctions
+from . import socrates_comparison
 
 
-# Use a context manager to start and stop the data processor thread. See:
+# Use a context manager to start and stop data processor threads. See:
 #
 # https://fastapi.tiangolo.com/advanced/events/#lifespan-function
 #
@@ -34,18 +34,18 @@ async def lifespan(app: FastAPI) -> Any:
 
     logger = logging.getLogger("arroyo")
 
-    # Start the data processor thread.
-    logger.debug("Creating the data processor thread")
-    dp = public_conjunctions._data._data_processor()
-    logger.debug("Starting the data processor thread")
+    # Start the data processor threads.
+    logger.debug("Creating the socrates_comparison data processor thread")
+    dp = socrates_comparison._data._data_processor()
+    logger.debug("Starting the socrates_comparison data processor thread")
     dp.start()
 
     yield
 
-    # Stop the data processor thread.
-    logger.debug("Stopping the data processor thread")
+    # Stop the data processor threads.
+    logger.debug("Stopping the socrates_comparison data processor thread")
     dp._stop()
-    logger.debug("Joining the data processor thread")
+    logger.debug("Joining the socrates_comparison data processor thread")
     dp.join()
 
 
@@ -63,4 +63,4 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(public_conjunctions.router)
+app.include_router(socrates_comparison.router)

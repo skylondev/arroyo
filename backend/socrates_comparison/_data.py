@@ -67,10 +67,13 @@ def _conj_init_setup() -> conjunction_data:
                 ret: conjunction_data = pickle.load(f)
         except Exception:
             logger.error(
-                "Exception caught while attempting to load cached conjunction data, returning empty data instead",
+                "Exception caught while attempting to load cached conjunction data, deleting it and returning empty data instead",
                 exc_info=True,
                 stack_info=True,
             )
+
+            # Delete the existing data.
+            _conj_path.unlink()
 
             return conjunction_data()
 
@@ -190,7 +193,7 @@ class _data_processor(threading.Thread):
                 # Save it into the cache.
                 # NOTE: it is *important* to do this *before* invoking _set_conjunctions(),
                 # otherwise we may end up pickling a dataframe while we are operating on it
-                # from another thread (i.e., from the public_conjunctions endpoint).
+                # from another thread (i.e., from the socrates_comparison endpoint).
                 # This results in "RuntimeError: Already mutably borrowed" errors and possibly
                 # worse, as I am not sure what goes on exactly with the pickling...
                 with open(_conj_path, "wb") as f:
