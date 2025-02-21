@@ -209,7 +209,7 @@ def _determine_socrates_time_range() -> tuple[Time, Time]:
 
 # Initial setup of the mizuba conjunctions dataframe.
 def _create_mz_conj_init(
-    cj: mz.conjunctions, norad_ids: np.typing.NDArray[np.uint64]
+    cj: mz.conjunctions, pj: mz.polyjectory, norad_ids: np.typing.NDArray[np.uint64]
 ) -> pl.DataFrame:
     # Fetch the array of conjunctions.
     conj = cj.conjunctions
@@ -220,7 +220,7 @@ def _create_mz_conj_init(
 
     # Build the tca column, representing it as a ISO UTC
     # string with ns resolution.
-    pj_epoch1, pj_epoch2 = cj.polyjectory.epoch
+    pj_epoch1, pj_epoch2 = pj.epoch
     tca = Time(
         val=pj_epoch1,
         val2=pj_epoch2 + conj["tca"],
@@ -383,12 +383,13 @@ def _create_mz_conj_merged(
 # detection.
 def _create_mz_conj(
     cj: mz.conjunctions,
+    pj: mz.polyjectory,
     norad_ids: np.typing.NDArray[np.uint64],
     satcat: pl.DataFrame,
     soc_df: pl.DataFrame,
 ) -> tuple[int, pl.DataFrame]:
     # Initial setup.
-    cdf = _create_mz_conj_init(cj, norad_ids)
+    cdf = _create_mz_conj_init(cj, pj, norad_ids)
 
     # Augment with properties from the satcat.
     cdf = _create_mz_conj_satcat_augment(cdf, satcat)
@@ -440,7 +441,7 @@ def _create_new_conj() -> tuple[int, pl.DataFrame, Time, Time]:
     logger.debug("Creating new conjunctions dataframe")
 
     # Construct and return the conjunctions dataframe.
-    ret = _create_mz_conj(cj, norad_ids, satcat_fut.result(), soc_df)
+    ret = _create_mz_conj(cj, pj, norad_ids, satcat_fut.result(), soc_df)
 
     logger.debug("New conjunctions dataframe created")
 
