@@ -3,7 +3,7 @@ from typing import Literal, Annotated, Self, TypeAlias
 from enum import Enum
 
 
-# NOTE: this is sent by the frontend. It represent a column with
+# NOTE: this is sent by the frontend. It represents a single column with
 # respect to which the sorting will take place and whether or not
 # the sorting should be descending.
 class column_sort(BaseModel):
@@ -25,7 +25,7 @@ class range_filter_fns(Enum):
 
 
 # Definition of the allowed filter predicates for each column.
-class conjunctions_filter_fns(BaseModel):
+class filter_fns(BaseModel):
     # NOTE: filtering on norad ids and object names is restricted
     # to the 'contains' predicate.
     norad_ids: Literal["contains"]
@@ -87,7 +87,7 @@ class conjunctions_params(BaseModel):
     begin: int = Field(..., ge=0)
     nrows: int = Field(..., ge=0, le=500)
     sorting: list[column_sort]
-    conjunctions_filter_fns: conjunctions_filter_fns
+    filter_fns: filter_fns
     conjunctions_filters: list[
         norad_ids_filter
         | object_names_filter
@@ -121,7 +121,7 @@ class conjunctions_params(BaseModel):
                 "dca_diff",
                 "relative_speed_diff",
             ]:
-                cur_flt_fn = getattr(self.conjunctions_filter_fns, flt.id)
+                cur_flt_fn = getattr(self.filter_fns, flt.id)
 
                 if cur_flt_fn in [
                     range_filter_fns.between,

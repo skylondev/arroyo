@@ -77,7 +77,7 @@ const useGetConjunctions = ({ columnFilterFns, columnFilters, sorting, paginatio
     begin: pagination.pageIndex * pagination.pageSize,
     nrows: pagination.pageSize,
     sorting: sorting,
-    conjunctions_filter_fns: columnFilterFns,
+    filter_fns: columnFilterFns,
     conjunctions_filters: columnFilters,
   };
 
