@@ -17,7 +17,7 @@ assert _cache_dir.is_dir()
 _conj_path = _cache_dir / "conj.pickle"
 
 # The conjunctions dataframe schema.
-_conj_schema = pl.Schema(
+_conj_df_schema = pl.Schema(
     [
         ("norad_id_i", pl.UInt64),
         ("norad_id_j", pl.UInt64),
@@ -40,7 +40,7 @@ _conj_schema = pl.Schema(
 class conjunction_data:
     n_missed_conj: int = 0
     df: pl.DataFrame = field(
-        default_factory=lambda: pl.DataFrame([], schema=_conj_schema)
+        default_factory=lambda: pl.DataFrame([], schema=_conj_df_schema)
     )
     timestamp: str | None = None
     comp_time: float = 0
@@ -77,7 +77,7 @@ def _conj_init_setup() -> conjunction_data:
 
             return conjunction_data()
 
-        if ret.df.schema != _conj_schema:
+        if ret.df.schema != _conj_df_schema:
             # Schema mismatch.
             logger.debug(
                 "The existing conjunction data has an invalid schema, deleting it and returning empty data"
@@ -167,7 +167,7 @@ class _data_processor(threading.Thread):
                 # We need new conjunctions data. Create it, with timing.
                 ts_start = Time.now()
                 n_missed_conj, df, date_begin, date_end = _create_new_conj()
-                assert df.schema == _conj_schema
+                assert df.schema == _conj_df_schema
                 ts_stop = Time.now()
 
                 # Calculate the computation time.
