@@ -399,7 +399,9 @@ def _create_mz_conj(
 
 
 # Main function to create a new conjunctions dataframe.
-def _create_new_conj() -> tuple[int, pl.DataFrame, Time, Time]:
+def _create_new_conj() -> tuple[int, pl.DataFrame, mz.polyjectory, Time, Time]:
+    from ._data import _cache_dir
+
     logger = logging.getLogger("arroyo")
 
     # Fetch the data from celestrak.
@@ -430,8 +432,13 @@ def _create_new_conj() -> tuple[int, pl.DataFrame, Time, Time]:
 
     logger.debug("Building the polyjectory")
 
-    # Build the polyjectory.
-    pj, norad_ids = mz.make_sgp4_polyjectory(on_orbit, date_begin.jd, date_end.jd)
+    # Build the polyjectory, using the cache dir as tmpdir and making
+    # sure that the data persists to disk.
+    pj, norad_ids = mz.make_sgp4_polyjectory(
+        on_orbit, date_begin.jd, date_end.jd, tmpdir=_cache_dir, persist=True
+    )
+
+    logger.debug(f"New polyjectory built with data dir '{pj.data_dir}'")
 
     logger.debug("Running conjunction detection")
 
@@ -445,4 +452,4 @@ def _create_new_conj() -> tuple[int, pl.DataFrame, Time, Time]:
 
     logger.debug("New conjunctions dataframe created")
 
-    return *ret, date_begin, date_end
+    return *ret, pj, date_begin, date_end

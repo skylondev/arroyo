@@ -21,7 +21,7 @@ def get_conjunctions(
     logger.debug("Processing get_conjunctions() request")
 
     # Fetch the conjunction data.
-    cdata = _get_conjunctions()
+    cdata, _ = _get_conjunctions()
 
     # Fetch the dataframe and a lazy version of it.
     conj = cdata.df
