@@ -336,6 +336,10 @@ def _create_mz_conj_merged(
     # Determine the number of missed conjunctions (hopefully zero).
     n_missed_conj = cdf.select(pl.col("tca_right").is_null().sum()).item()
 
+    # Drop the missed conjunctions. If we do not do this, we will have issues
+    # because the dataframe will contain null values.
+    cdf = cdf.filter(~pl.col("tca_right").is_null())
+
     # Add columns with tca, dca and relative speed differences.
     cdf = cdf.with_columns(
         (
