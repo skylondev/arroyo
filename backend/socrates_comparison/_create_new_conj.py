@@ -351,6 +351,9 @@ def _create_mz_conj_merged(
         .alias("relative_speed_diff"),
     )
 
+    # Make sure to keep around a column with socrates' tca. This is used in the plots.
+    cdf = cdf.with_columns(pl.col("tca").alias("tca_socrates"))
+
     # Rename the foo_right columns to foo. That is, we are keeping the results
     # from mizuba.
     cdf = cdf.with_columns(
@@ -373,6 +376,7 @@ def _create_mz_conj_merged(
         "tca_diff",
         "dca_diff",
         "relative_speed_diff",
+        "tca_socrates",
     )
 
     return n_missed_conj, cdf

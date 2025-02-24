@@ -130,6 +130,9 @@ def get_conjunctions(
     # Fetch the requested row range.
     sub_df = df[params.begin : params.begin + params.nrows]
 
+    # Drop the "tca_socrates" column.
+    sub_df = sub_df.drop("tca_socrates")
+
     # Compress the norad id columns into a single string column.
     sub_df = sub_df.with_columns(
         pl.concat_str(
