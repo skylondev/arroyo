@@ -96,6 +96,7 @@ def get_conjunctions(
                             filters.append(pl.col(col) > value_range[0])
                             filters.append(pl.col(col) < value_range[1])
                         else:
+                            assert filter_f == range_filter_fns.between_inclusive
                             filters.append(pl.col(col) >= value_range[0])
                             filters.append(pl.col(col) <= value_range[1])
                     else:
@@ -112,6 +113,7 @@ def get_conjunctions(
                         if filter_f == range_filter_fns.greater_than:
                             filters.append(pl.col(col) > value)
                         else:
+                            assert filter_f == range_filter_fns.less_than
                             filters.append(pl.col(col) < value)
 
     # Apply the filter(s), if any.
