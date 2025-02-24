@@ -9,6 +9,8 @@ from enum import Enum
 # instances of column_sort packed in an array, signalling sorting by
 # multiple criteria.
 class column_sort(BaseModel):
+    model_config = {"extra": "forbid"}
+
     desc: bool
     # NOTE: these are the columns with respect to which we allow sorting.
     id: Literal[
@@ -28,6 +30,8 @@ class range_filter_fns(Enum):
 
 # The allowed filter predicates for each column wrt which we allow sorting.
 class filter_fns(BaseModel):
+    model_config = {"extra": "forbid"}
+
     # NOTE: filtering on norad ids and object names is restricted
     # to the 'contains' predicate.
     norad_ids: Literal["contains"]
@@ -42,11 +46,15 @@ class filter_fns(BaseModel):
 
 # The filter values for each column wrt which we allow sorting.
 class norad_ids_filter(BaseModel):
+    model_config = {"extra": "forbid"}
+
     id: Literal["norad_ids"]
     value: str
 
 
 class object_names_filter(BaseModel):
+    model_config = {"extra": "forbid"}
+
     id: Literal["object_names"]
     value: str
 
@@ -58,26 +66,36 @@ range_based_fv: TypeAlias = (
 
 
 class dca_filter(BaseModel):
+    model_config = {"extra": "forbid"}
+
     id: Literal["dca"]
     value: range_based_fv
 
 
 class relative_speed_filter(BaseModel):
+    model_config = {"extra": "forbid"}
+
     id: Literal["relative_speed"]
     value: range_based_fv
 
 
 class tca_diff_filter(BaseModel):
+    model_config = {"extra": "forbid"}
+
     id: Literal["tca_diff"]
     value: range_based_fv
 
 
 class dca_diff_filter(BaseModel):
+    model_config = {"extra": "forbid"}
+
     id: Literal["dca_diff"]
     value: range_based_fv
 
 
 class relative_speed_diff_filter(BaseModel):
+    model_config = {"extra": "forbid"}
+
     id: Literal["relative_speed_diff"]
     value: range_based_fv
 

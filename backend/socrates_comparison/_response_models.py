@@ -4,6 +4,8 @@ from pydantic import BaseModel, Field
 # NOTE: this represents a single row in the conjunctions table
 # that is sent to the frontend.
 class single_row(BaseModel):
+    model_config = {"extra": "forbid"}
+
     norad_ids: str
     object_names: str
     tca: str
@@ -16,6 +18,8 @@ class single_row(BaseModel):
 
 # NOTE: this is the response that will be sent to the frontend.
 class response(BaseModel):
+    model_config = {"extra": "forbid"}
+
     # The list of conjunctions to be visualised in the current page.
     rows: list[single_row]
     # The total number of rows.
