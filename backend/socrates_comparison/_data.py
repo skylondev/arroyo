@@ -140,22 +140,35 @@ def _conj_init_setup() -> tuple[conjunction_data, mz.polyjectory | None]:
 
 # Initial setup of the conjunctions data.
 _conj_lock = threading.Lock()
-_conj, _pj = _conj_init_setup()
+# NOTE: conjunctions data and pj are stored packed in a tuple.
+# The intent here is to promote atomicity during updates via
+# _set_conjunctions().
+# NOTE: if needed, we could think about introducing an ad-hoc
+# dataclass here instead of the tuple.
+_conj_data = _conj_init_setup()
 
 
 # Thread-safe getter for the conjunctions data.
 def _get_conjunctions() -> tuple[conjunction_data, mz.polyjectory | None]:
     with _conj_lock:
-        return _conj, _pj
+        return _conj_data
 
 
 # Thread-safe setter for the conjunctions data.
 def _set_conjunctions(new_conj: conjunction_data, new_pj: mz.polyjectory) -> None:
-    global _conj, _pj
+    global _conj_data
+
+    # NOTE: the point of creating a new tuple and then assigning
+    # it while holding the lock is that this will translate to a single
+    # assignment instruction in the Python bytecode. This should hopefully be
+    # a single atomic operation, whereas if we managed the two members of the
+    # tuple independently we could in principle end up in a situation in which
+    # the first assignment succeeds but the second fails, leaving the in-memory
+    # data in an inconsistent state.
+    new_conj_data = (new_conj, new_pj)
 
     with _conj_lock:
-        _conj = new_conj
-        _pj = new_pj
+        _conj_data = new_conj_data
 
 
 # The data processor thread.
