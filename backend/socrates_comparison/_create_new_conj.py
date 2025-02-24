@@ -399,7 +399,9 @@ def _create_mz_conj(
 
 
 # Main function to create a new conjunctions dataframe.
-def _create_new_conj() -> tuple[int, pl.DataFrame, mz.polyjectory, Time, Time]:
+def _create_new_conj() -> (
+    tuple[int, pl.DataFrame, mz.polyjectory, np.typing.NDArray[np.uint64], Time, Time]
+):
     from ._data import _cache_dir
 
     logger = logging.getLogger("arroyo")
@@ -452,4 +454,4 @@ def _create_new_conj() -> tuple[int, pl.DataFrame, mz.polyjectory, Time, Time]:
 
     logger.debug("New conjunctions dataframe created")
 
-    return *ret, pj, date_begin, date_end
+    return *ret, pj, norad_ids, date_begin, date_end

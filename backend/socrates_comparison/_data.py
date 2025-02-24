@@ -10,6 +10,7 @@ from ._create_new_conj import _create_new_conj
 import weakref
 import shutil
 import mizuba as mz  # type: ignore
+import numpy as np
 
 # Determine the absolute path to the cache dir.
 _cache_dir = (pathlib.Path(__file__).parent / "cache").resolve()
@@ -41,7 +42,7 @@ _conj_df_schema = pl.Schema(
 # Current version of the conjunctions data class.
 # NOTE: this needs to be bumped when the conjunctions data class changes.
 # This also includes changes in _conj_df_schema.
-_cd_cur_version = 0
+_cd_cur_version = 1
 
 
 # Conjunctions data class. This is the class that holds the results of
@@ -69,6 +70,9 @@ class conjunction_data:
     # storing the data of the polyjectory that was used
     # during conjunction detection.
     pj_dir_name: str | None = None
+    # The list of norad IDs for the polyjectory that
+    # was used during conjunction detection.
+    norad_ids: np.typing.NDArray[np.uint64] | None = None
 
 
 # The prefix of the directories (within the cache dir)
@@ -288,7 +292,9 @@ class _data_processor(threading.Thread):
 
                 # We need new conjunctions data. Create it, with timing.
                 ts_start = Time.now()
-                n_missed_conj, df, pj, date_begin, date_end = _create_new_conj()
+                n_missed_conj, df, pj, norad_ids, date_begin, date_end = (
+                    _create_new_conj()
+                )
                 assert df.schema == _conj_df_schema
                 ts_stop = Time.now()
 
@@ -312,6 +318,7 @@ class _data_processor(threading.Thread):
                     date_begin=date_begin.utc.iso,
                     date_end=date_end.utc.iso,
                     pj_dir_name=pj_dir_name,
+                    norad_ids=norad_ids,
                 )
 
                 logger.debug("New conjunctions data successfully created")
