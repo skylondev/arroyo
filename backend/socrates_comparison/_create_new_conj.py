@@ -440,6 +440,9 @@ def _create_new_conj() -> (
         on_orbit, date_begin.jd, date_end.jd, tmpdir=_cache_dir, persist=True
     )
 
+    # Mark the norad IDs array as read-only.
+    norad_ids.flags.writeable = False
+
     logger.debug(f"New polyjectory built with data dir '{pj.data_dir}'")
 
     logger.debug("Running conjunction detection")
