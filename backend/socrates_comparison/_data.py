@@ -35,7 +35,8 @@ _conj_df_schema = pl.Schema(
         ("tca_diff", pl.Float64),
         ("dca_diff", pl.Float64),
         ("relative_speed_diff", pl.Float64),
-        ("tca_socrates", pl.Datetime(time_unit="ns", time_zone="UTC")),
+        ("tca_days", pl.Float64),
+        ("tca_socrates_days", pl.Float64),
     ]
 )
 
@@ -43,7 +44,7 @@ _conj_df_schema = pl.Schema(
 # Current version of the conjunctions data class.
 # NOTE: this needs to be bumped when the conjunctions data class changes.
 # This also includes changes in _conj_df_schema.
-_cd_cur_version = 2
+_cd_cur_version = 3
 
 
 # Conjunctions data class. This is the class that holds the results of

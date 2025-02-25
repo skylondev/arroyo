@@ -320,7 +320,9 @@ def _create_mz_conj_satcat_augment(
 
 # Create a dataframe merging the results of mizuba's and socrates' conjunction detection.
 def _create_mz_conj_merged(
-    cdf: pl.DataFrame, soc_df: pl.DataFrame
+    cdf: pl.DataFrame,
+    soc_df: pl.DataFrame,
+    date_begin: Time,
 ) -> tuple[int, pl.DataFrame]:
     # Construct the joined dataframe. This will match all the conjunctions
     # detected by socrates to corresponding conjunctions detected by mizuba.
@@ -355,11 +357,33 @@ def _create_mz_conj_merged(
         .alias("relative_speed_diff"),
     )
 
-    # Make sure to keep around a column with socrates' tca. This is used in the plots.
-    cdf = cdf.with_columns(pl.col("tca").alias("tca_socrates"))
+    # Add columns representing the tcas measured in days from date_begin.
+    # NOTE: here we are creating a dataframe containing a single value of type
+    # pl.Datetime. The intent is to convert from an astropy Time object into
+    # the polars datatype without involving the datetime Python module (which we
+    # want to avoid due to its deficiencies).
+    date_begin_df = pl.DataFrame({"date": date_begin.iso}).with_columns(
+        pl.col("date")
+        .str.to_datetime(format="%Y-%m-%d %H:%M:%S%.9f", time_zone="UTC")
+        .cast(pl.Datetime("ns", "UTC"))
+    )
+    cdf = cdf.with_columns(
+        (
+            # NOTE: the single value in date_begin_df will be broadcasted
+            # (i.e., splatted) to the shape of tca_right in this subtraction.
+            (pl.col("tca_right") - date_begin_df["date"])
+            .dt.total_nanoseconds()
+            .cast(float)
+            / (86400 * 1e9)
+        ).alias("tca_days"),
+        (
+            (pl.col("tca") - date_begin_df["date"]).dt.total_nanoseconds().cast(float)
+            / (86400 * 1e9)
+        ).alias("tca_socrates_days"),
+    )
 
-    # Rename the foo_right columns to foo. That is, we are keeping the results
-    # from mizuba.
+    # Rename the foo_right columns to foo. That is, we are keeping only the results
+    # from mizuba (except for tca_socrates_days).
     cdf = cdf.with_columns(
         pl.col("tca_right").alias("tca"),
         pl.col("dca_right").alias("dca"),
@@ -380,7 +404,8 @@ def _create_mz_conj_merged(
         "tca_diff",
         "dca_diff",
         "relative_speed_diff",
-        "tca_socrates",
+        "tca_days",
+        "tca_socrates_days",
     )
 
     return n_missed_conj, cdf
@@ -395,6 +420,7 @@ def _create_mz_conj(
     norad_ids: np.typing.NDArray[np.uint64],
     satcat: pl.DataFrame,
     soc_df: pl.DataFrame,
+    date_begin: Time,
 ) -> tuple[int, pl.DataFrame]:
     # Initial setup.
     cdf = _create_mz_conj_init(cj, pj, norad_ids)
@@ -403,7 +429,7 @@ def _create_mz_conj(
     cdf = _create_mz_conj_satcat_augment(cdf, satcat)
 
     # Merge the results with socrates' and return
-    return _create_mz_conj_merged(cdf, soc_df)
+    return _create_mz_conj_merged(cdf, soc_df, date_begin)
 
 
 # Main function to create a new conjunctions dataframe.
@@ -461,7 +487,7 @@ def _create_new_conj() -> (
     logger.debug("Creating new conjunctions dataframe")
 
     # Construct and return the conjunctions dataframe.
-    ret = _create_mz_conj(cj, pj, norad_ids, satcat_fut.result(), soc_df)
+    ret = _create_mz_conj(cj, pj, norad_ids, satcat_fut.result(), soc_df, date_begin)
 
     logger.debug("New conjunctions dataframe created")
 
