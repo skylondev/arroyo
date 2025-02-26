@@ -27,10 +27,6 @@ def get_conjunctions(
     conj = cdata.df
     df = conj.lazy()
 
-    # Drop the "tca_days" and "tca_socrates_days" columns, as they
-    # will not be shown in the table.
-    df = df.drop("tca_days", "tca_socrates_days")
-
     # If we have filtering to do, we will collect the filtering expressions
     # here and apply them all at once later.
     filters: list[pl.Expr] = []

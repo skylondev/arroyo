@@ -27,6 +27,7 @@ import './App.css'
 
 // Conjunction datatype.
 type Conjunction = {
+  conj_index: number;
   norad_ids: string;
   object_names: string;
   tca: string;

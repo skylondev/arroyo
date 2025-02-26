@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 class single_row(BaseModel):
     model_config = {"extra": "forbid"}
 
+    conj_index: int
     norad_ids: str
     object_names: str
     tca: str

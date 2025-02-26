@@ -23,6 +23,7 @@ _cd_path = _cache_dir / "cd.pickle"
 # The conjunctions dataframe schema.
 _conj_df_schema = pl.Schema(
     [
+        ("conj_index", pl.UInt64),
         ("norad_id_i", pl.UInt64),
         ("norad_id_j", pl.UInt64),
         ("object_name_i", pl.String),
@@ -35,8 +36,6 @@ _conj_df_schema = pl.Schema(
         ("tca_diff", pl.Float64),
         ("dca_diff", pl.Float64),
         ("relative_speed_diff", pl.Float64),
-        ("tca_days", pl.Float64),
-        ("tca_socrates_days", pl.Float64),
     ]
 )
 
@@ -44,7 +43,7 @@ _conj_df_schema = pl.Schema(
 # Current version of the conjunctions data class.
 # NOTE: this needs to be bumped when the conjunctions data class changes.
 # This also includes changes in _conj_df_schema.
-_cd_cur_version = 3
+_cd_cur_version = 4
 
 
 # Conjunctions data class. This is the class that holds the results of
