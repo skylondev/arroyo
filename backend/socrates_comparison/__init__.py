@@ -133,8 +133,11 @@ def get_conjunctions(
     # Fetch the requested row range.
     sub_df = df[params.begin : params.begin + params.nrows]
 
+    # Collect it.
+    sub_df_coll = sub_df.collect()
+
     # Compress the norad id columns into a single string column.
-    sub_df = sub_df.with_columns(
+    sub_df_coll = sub_df_coll.with_columns(
         pl.concat_str(
             pl.col("norad_id_i").cast(str),
             pl.col("norad_id_j").cast(str),
@@ -143,7 +146,7 @@ def get_conjunctions(
     ).drop("norad_id_i", "norad_id_j")
 
     # Compress object names and statuses into a single column.
-    sub_df = sub_df.with_columns(
+    sub_df_coll = sub_df_coll.with_columns(
         pl.concat_str(
             pl.col("object_name_i") + " [" + pl.col("ops_status_i") + "]",
             pl.col("object_name_j") + " [" + pl.col("ops_status_j") + "]",
@@ -152,10 +155,12 @@ def get_conjunctions(
     ).drop("object_name_i", "ops_status_i", "object_name_j", "ops_status_j")
 
     # Convert the tca column to UTC ISO string with ms precision.
-    sub_df = sub_df.with_columns(pl.col("tca").dt.strftime("%Y-%m-%d %H:%M:%S.%3f"))
+    sub_df_coll = sub_df_coll.with_columns(
+        pl.col("tca").dt.strftime("%Y-%m-%d %H:%M:%S.%3f")
+    )
 
-    # Collect and convert to dicts the requested row range.
-    rows = sub_df.collect().to_dicts()
+    # Convert to dicts.
+    rows = sub_df_coll.to_dicts()
 
     ret = {
         "rows": rows,
