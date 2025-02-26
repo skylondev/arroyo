@@ -25,8 +25,8 @@ import {
 
 import './App.css'
 
-// Conjunction datatype.
-type Conjunction = {
+// Single row in the conjunctions table sent by the backend.
+type single_row = {
   conj_index: number;
   norad_ids: string;
   object_names: string;
@@ -38,10 +38,10 @@ type Conjunction = {
   relative_speed_diff: number;
 };
 
-// Type expected from the conjunctions endpoint in the backend.
-type ConjunctionApiResponse = {
+// Set of rows that will be sent by the backend.
+type rows_response = {
   // The list of conjunctions to be visualised in the current page.
-  rows: Array<Conjunction>,
+  rows: Array<single_row>,
   // The total number of rows.
   tot_nrows: number;
   // The total number of conjunctions.
@@ -105,14 +105,14 @@ const useGetConjunctions = ({ columnFilterFns, columnFilters, sorting, paginatio
       return Promise.reject(error);
     }
 
-    return responseData as ConjunctionApiResponse;
+    return responseData as rows_response;
   };
 
   // NOTE: what this does is essentially adding a few features on top of just
   // calling queryFunction() directly. The important bit for us it the caching behaviour:
   // if the result of a previous invocation of queryFunction() for a given 'body' was already
   // computed, the cached result will be returned.
-  return useQuery<ConjunctionApiResponse>({
+  return useQuery<rows_response>({
     // Here's the cache: we need to give a unique name ('conjunctions')
     // and pass the current 'body'.
     queryKey: ['conjunctions', body],
@@ -130,7 +130,7 @@ const ConjunctionsTable = () => {
   const range_filter_modes = ['greaterThan', 'lessThan', 'between', 'betweenInclusive'];
 
   // Definition of the columns.
-  const columns = useMemo<MRT_ColumnDef<Conjunction>[]>(
+  const columns = useMemo<MRT_ColumnDef<single_row>[]>(
     () => [
       {
         accessorKey: 'norad_ids',
