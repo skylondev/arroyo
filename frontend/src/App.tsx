@@ -105,7 +105,7 @@ const useGetConjunctions = ({ columnFilterFns, columnFilters, sorting, paginatio
       return Promise.reject(error);
     }
 
-    return responseData as rows_response;
+    return responseData;
   };
 
   // NOTE: what this does is essentially adding a few features on top of just
@@ -265,8 +265,8 @@ const ConjunctionsTable = () => {
     pageSize: 10,
   });
 
-  // Call our custom react-query hook to fetch the data from the backend.
-  const { data, isError, isFetching, isLoading, refetch } = useGetConjunctions({
+  // Call our custom react-query hook to fetch the table data from the backend.
+  const { data: table_data, isError: table_data_error, isFetching: table_data_fetching, isLoading: table_data_loading, refetch: table_refetch } = useGetConjunctions({
     columnFilterFns,
     columnFilters,
     pagination,
@@ -275,18 +275,18 @@ const ConjunctionsTable = () => {
 
   // Fetch the conjunctions for the current page and the total
   // number of conjunctions from the response.
-  const fetchedConjunctions = data?.rows ?? [];
-  const totalRowCount = data?.tot_nrows ?? 0;
+  const fetchedConjunctions = table_data?.rows ?? [];
+  const totalRowCount = table_data?.tot_nrows ?? 0;
 
   // Setup the "missed conjunctions" text element.
-  const n_missed_conj = data?.n_missed_conj ?? 0;
+  const n_missed_conj = table_data?.n_missed_conj ?? 0;
   const missed_conj = <Text component="span" fw={700} size="l" c={n_missed_conj == 0 ? "green.6" : "red.6"}>
     {n_missed_conj}
   </Text>;
 
   // Fetch date_begin/date_end.
-  const date_begin = data?.date_begin ?? "N/A";
-  const date_end = data?.date_end ?? "N/A";
+  const date_begin = table_data?.date_begin ?? "N/A";
+  const date_end = table_data?.date_end ?? "N/A";
 
   const table = useMantineReactTable({
     columns,
@@ -297,7 +297,7 @@ const ConjunctionsTable = () => {
     manualFiltering: true,
     manualPagination: true,
     manualSorting: true,
-    mantineToolbarAlertBannerProps: isError
+    mantineToolbarAlertBannerProps: table_data_error
       ? {
         color: 'red',
         children: 'Error loading data',
@@ -310,17 +310,17 @@ const ConjunctionsTable = () => {
     renderTopToolbarCustomActions: () => (
       <Group>
         <Tooltip label="Refresh Data">
-          <ActionIcon onClick={() => refetch()} size='l'>
+          <ActionIcon onClick={() => table_refetch()} size='l'>
             <IconRefresh />
           </ActionIcon>
         </Tooltip>
-        <Text size="sm">Total conjunctions: <strong>{data?.tot_nconj ?? 0}</strong></Text>
+        <Text size="sm">Total conjunctions: <strong>{table_data?.tot_nconj ?? 0}</strong></Text>
         <Text size="sm">|</Text>
-        <Text size="sm">Last updated: <strong>{data?.conj_ts ?? "N/A"} (UTC)</strong></Text>
+        <Text size="sm">Last updated: <strong>{table_data?.conj_ts ?? "N/A"} (UTC)</strong></Text>
         <Text size="sm">|</Text>
         <Text size="sm">Time interval: <strong>{date_begin} (UTC)</strong> — <strong>{date_end} (UTC)</strong></Text>
         <Text size="sm">|</Text>
-        <Text size="sm">Runtime: <strong>{(data?.comp_time ?? 0).toPrecision(4)}s</strong></Text>
+        <Text size="sm">Runtime: <strong>{(table_data?.comp_time ?? 0).toPrecision(4)}s</strong></Text>
         <Text size="sm">|</Text>
         <Text size="sm">Missed conjunctions: {missed_conj}</Text>
       </Group>
@@ -329,11 +329,12 @@ const ConjunctionsTable = () => {
     state: {
       columnFilterFns,
       columnFilters,
-      isLoading,
+      isLoading: table_data_loading,
       pagination,
-      showAlertBanner: isError,
-      showProgressBars: isFetching,
+      showAlertBanner: table_data_error,
+      showProgressBars: table_data_fetching,
       sorting,
+      expanded,
     },
     enableColumnActions: false,
     enableColumnDragging: false,
