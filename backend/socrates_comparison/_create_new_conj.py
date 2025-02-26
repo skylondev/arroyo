@@ -340,7 +340,11 @@ def _create_mz_conj_merged(
     # because the dataframe will contain null values.
     cdf = cdf.filter(~pl.col("tca_right").is_null())
 
-    # Add columns with tca, dca and relative speed differences.
+    # Add a copy of the "tca" column called "tca_socrates".
+    cdf = cdf.with_columns(pl.col("tca").alias("tca_socrates"))
+
+    # Add columns with tca, dca and relative speed differences between
+    # mizuba and socrates.
     cdf = cdf.with_columns(
         (
             (pl.col("tca") - pl.col("tca_right"))
@@ -373,6 +377,7 @@ def _create_mz_conj_merged(
         "tca",
         "dca",
         "relative_speed",
+        "tca_socrates",
         "tca_diff",
         "dca_diff",
         "relative_speed_diff",
