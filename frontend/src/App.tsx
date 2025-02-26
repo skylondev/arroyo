@@ -23,7 +23,7 @@ import {
   useQuery,
 } from '@tanstack/react-query';
 
-import './App.css'
+import './App.css';
 
 // Single row in the conjunctions table sent by the backend.
 type single_row = {
@@ -70,7 +70,7 @@ type useGetConjunctionsParams = {
 // react-query hook to fetch the list of conjunctions from the backend.
 const useGetConjunctions = ({ columnFilterFns, columnFilters, sorting, pagination }: useGetConjunctionsParams) => {
   // API url.
-  const url = 'http://localhost:8000/socrates_comparison/'
+  const url = 'http://localhost:8000/socrates_comparison/';
 
   // The body for the POST request. Here we are setting all the parameters
   // to be passed to the backend.
@@ -122,126 +122,128 @@ const useGetConjunctions = ({ columnFilterFns, columnFilters, sorting, paginatio
     // NOTE: do not refetch previously viewed pages until cache is more than 30 seconds old.
     staleTime: 30_000,
   });
-}
+};
 
 // Function to create the table of conjunctions.
 const ConjunctionsTable = () => {
-  // Allowed predicates for range-based filters.
-  const range_filter_modes = ['greaterThan', 'lessThan', 'between', 'betweenInclusive'];
-
   // Definition of the columns.
   const columns = useMemo<MRT_ColumnDef<single_row>[]>(
-    () => [
-      {
-        accessorKey: 'norad_ids',
-        header: 'Norad ID',
-        columnFilterModeOptions: ['contains'],
-        size: 60,
-        enableSorting: false,
-        Cell: ({ cell }) => {
-          const [first, second] = cell.getValue<string>().split(" | ");
+    () => {
+      // Allowed predicates for range-based filters.
+      const range_filter_modes = ['greaterThan', 'lessThan', 'between', 'betweenInclusive'];
 
-          return <Stack gap="2px"><Box style={(theme) => ({
-            backgroundColor:
-              theme.colors.blue[9],
-            borderRadius: '5px',
-            color: '#fff',
-            padding: '2px',
-          })}>
-            <Text size="sm" fw={700}>{first}</Text>
-          </Box>
-            <Box style={(theme) => ({
+      return [
+        {
+          accessorKey: 'norad_ids',
+          header: 'Norad ID',
+          columnFilterModeOptions: ['contains'],
+          size: 60,
+          enableSorting: false,
+          Cell: ({ cell }) => {
+            const [first, second] = cell.getValue<string>().split(" | ");
+
+            return <Stack gap="2px"><Box style={(theme) => ({
               backgroundColor:
                 theme.colors.blue[9],
               borderRadius: '5px',
               color: '#fff',
               padding: '2px',
             })}>
-              <Text size="sm" fw={700}>{second}</Text>
-            </Box></Stack>
+              <Text size="sm" fw={700}>{first}</Text>
+            </Box>
+              <Box style={(theme) => ({
+                backgroundColor:
+                  theme.colors.blue[9],
+                borderRadius: '5px',
+                color: '#fff',
+                padding: '2px',
+              })}>
+                <Text size="sm" fw={700}>{second}</Text>
+              </Box></Stack>;
+          },
         },
-      },
-      {
-        accessorKey: 'object_names',
-        header: 'Name',
-        columnFilterModeOptions: ['contains'],
-        enableSorting: false,
-        Cell: ({ cell }) => {
-          const [first, second] = cell.getValue<string>().split(" | ");
+        {
+          accessorKey: 'object_names',
+          header: 'Name',
+          columnFilterModeOptions: ['contains'],
+          enableSorting: false,
+          Cell: ({ cell }) => {
+            const [first, second] = cell.getValue<string>().split(" | ");
 
-          return <Stack gap="2px"><Box style={(theme) => ({
-            backgroundColor:
-              theme.colors.indigo[9],
-            borderRadius: '5px',
-            color: '#fff',
-            padding: '2px',
-          })}>
-            <Text size="sm" fw={700}>{first}</Text>
-          </Box>
-            <Box style={(theme) => ({
+            return <Stack gap="2px"><Box style={(theme) => ({
               backgroundColor:
                 theme.colors.indigo[9],
               borderRadius: '5px',
               color: '#fff',
               padding: '2px',
             })}>
-              <Text size="sm" fw={700}>{second}</Text>
-            </Box></Stack>
+              <Text size="sm" fw={700}>{first}</Text>
+            </Box>
+              <Box style={(theme) => ({
+                backgroundColor:
+                  theme.colors.indigo[9],
+                borderRadius: '5px',
+                color: '#fff',
+                padding: '2px',
+              })}>
+                <Text size="sm" fw={700}>{second}</Text>
+              </Box></Stack>;
+          },
         },
-      },
-      {
-        accessorKey: 'tca',
-        header: 'TCA (UTC)',
-        enableColumnFilter: false,
-      },
-      {
-        accessorKey: 'dca',
-        header: 'DCA (km)',
-        columnFilterModeOptions: range_filter_modes,
-        Cell: ({ cell }) => (
-          <Box
-            style={(theme) => ({
-              backgroundColor:
-                cell.getValue<number>() < 0.5
-                  ? theme.colors.red[9]
-                  : cell.getValue<number>() >= 0.5 &&
-                    cell.getValue<number>() < 2.5
-                    ? theme.colors.yellow[9]
-                    : theme.colors.green[9],
-              borderRadius: '5px',
-              color: '#fff',
-              padding: '4px',
-            })}
-          >
-            {cell.getValue<Number>().toPrecision(4)}
-          </Box>
-        ),
-      },
-      {
-        accessorKey: 'relative_speed',
-        header: 'Rel. speed (km/s)',
-        columnFilterModeOptions: range_filter_modes,
-        Cell: ({ cell }) => cell.getValue<Number>().toPrecision(4),
-      },
-      {
-        accessorKey: 'tca_diff',
-        header: 'ΔTCA (ms)',
-        columnFilterModeOptions: range_filter_modes,
-        Cell: ({ cell }) => cell.getValue<Number>().toPrecision(4),
-      },
-      {
-        accessorKey: 'dca_diff',
-        header: 'ΔDCA (m)',
-        columnFilterModeOptions: range_filter_modes,
-        Cell: ({ cell }) => cell.getValue<Number>().toPrecision(4),
-      },
-      {
-        accessorKey: 'relative_speed_diff',
-        header: 'ΔRel. speed (m/s)',
-        columnFilterModeOptions: range_filter_modes,
-        Cell: ({ cell }) => cell.getValue<Number>().toPrecision(4),
-      },
-    ],
+        {
+          accessorKey: 'tca',
+          header: 'TCA (UTC)',
+          enableColumnFilter: false,
+        },
+        {
+          accessorKey: 'dca',
+          header: 'DCA (km)',
+          columnFilterModeOptions: range_filter_modes,
+          Cell: ({ cell }) => (
+            <Box
+              style={(theme) => ({
+                backgroundColor:
+                  cell.getValue<number>() < 0.5
+                    ? theme.colors.red[9]
+                    : cell.getValue<number>() >= 0.5 &&
+                      cell.getValue<number>() < 2.5
+                      ? theme.colors.yellow[9]
+                      : theme.colors.green[9],
+                borderRadius: '5px',
+                color: '#fff',
+                padding: '4px',
+              })}
+            >
+              {cell.getValue<number>().toPrecision(4)}
+            </Box>
+          ),
+        },
+        {
+          accessorKey: 'relative_speed',
+          header: 'Rel. speed (km/s)',
+          columnFilterModeOptions: range_filter_modes,
+          Cell: ({ cell }) => cell.getValue<number>().toPrecision(4),
+        },
+        {
+          accessorKey: 'tca_diff',
+          header: 'ΔTCA (ms)',
+          columnFilterModeOptions: range_filter_modes,
+          Cell: ({ cell }) => cell.getValue<number>().toPrecision(4),
+        },
+        {
+          accessorKey: 'dca_diff',
+          header: 'ΔDCA (m)',
+          columnFilterModeOptions: range_filter_modes,
+          Cell: ({ cell }) => cell.getValue<number>().toPrecision(4),
+        },
+        {
+          accessorKey: 'relative_speed_diff',
+          header: 'ΔRel. speed (m/s)',
+          columnFilterModeOptions: range_filter_modes,
+          Cell: ({ cell }) => cell.getValue<number>().toPrecision(4),
+        },
+      ];
+    },
     [],
   );
 
