@@ -93,7 +93,7 @@ def _download_socrates_conjunctions() -> pl.DataFrame:
         pl.col("tca")
         # NOTE: parse with ms resolution from socrates, then cast
         # to nanoseconds resolution.
-        .str.to_datetime(format="%Y-%m-%d %H:%M:%S%.3f", time_zone="UTC")
+        .str.to_datetime(format="%Y-%m-%d %H:%M:%S.%3f", time_zone="UTC")
         .cast(pl.Datetime("ns", "UTC"))
     )
 
@@ -248,7 +248,7 @@ def _create_mz_conj_init(
 
     # Transform the tca column into datetime.
     cdf = cdf.with_columns(
-        pl.col("tca").str.to_datetime(format="%Y-%m-%d %H:%M:%S%.9f", time_zone="UTC")
+        pl.col("tca").str.to_datetime(format="%Y-%m-%d %H:%M:%S.%9f", time_zone="UTC")
     )
 
     return cdf
@@ -364,7 +364,7 @@ def _create_mz_conj_merged(
     # want to avoid due to its deficiencies).
     date_begin_df = pl.DataFrame({"date": date_begin.iso}).with_columns(
         pl.col("date")
-        .str.to_datetime(format="%Y-%m-%d %H:%M:%S%.9f", time_zone="UTC")
+        .str.to_datetime(format="%Y-%m-%d %H:%M:%S.%9f", time_zone="UTC")
         .cast(pl.Datetime("ns", "UTC"))
     )
     cdf = cdf.with_columns(
