@@ -122,7 +122,7 @@ const useGetConjunctions = ({ columnFilterFns, columnFilters, sorting, paginatio
     // NOTE: do not refetch previously viewed pages until cache is more than 30 seconds old.
     staleTime: 30_000,
   });
-};
+}
 
 // Function to create the table of conjunctions.
 const ConjunctionsTable = () => {
