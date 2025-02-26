@@ -100,8 +100,9 @@ class relative_speed_diff_filter(BaseModel):
     value: range_based_fv
 
 
-# NOTE: this is the data sent by the frontend.
-class request(BaseModel):
+# NOTE: this is the data sent by the frontend when requesting
+# a set of rows to be displayed.
+class rows_request(BaseModel):
     model_config = {"extra": "forbid"}
 
     begin: int = Field(..., ge=0)

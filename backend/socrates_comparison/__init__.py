@@ -1,8 +1,8 @@
 from fastapi import APIRouter
 from ._data import _get_conjunctions
 from typing import Any, cast
-from ._response_models import response
-from ._request_models import request, range_filter_fns
+from ._response_models import rows_response
+from ._request_models import rows_request, range_filter_fns
 import polars as pl
 import logging
 
@@ -12,9 +12,9 @@ router = APIRouter(
 )
 
 
-@router.post("/", response_model=response)
+@router.post("/", response_model=rows_response)
 def get_conjunctions(
-    params: request,
+    params: rows_request,
 ) -> Any:
     logger = logging.getLogger("arroyo")
 

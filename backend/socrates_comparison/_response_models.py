@@ -16,8 +16,8 @@ class single_row(BaseModel):
     relative_speed_diff: float
 
 
-# NOTE: this is the response that will be sent to the frontend.
-class response(BaseModel):
+# NOTE: this is the set of rows that will be sent to the frontend.
+class rows_response(BaseModel):
     model_config = {"extra": "forbid"}
 
     # The list of conjunctions to be visualised in the current page.
