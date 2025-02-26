@@ -246,9 +246,12 @@ const ConjunctionsTable = () => {
   );
 
   // Manage MRT state that we want to pass to our API.
+
+  // The filter values.
   const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(
     [],
   );
+
   // Filter modes. We have different defaults depending on the column.
   const [columnFilterFns, setColumnFilterFns] =
     useState<MRT_ColumnFilterFnsState>(
@@ -259,7 +262,11 @@ const ConjunctionsTable = () => {
         'relative_speed_diff': 'lessThan',
       }
     );
+
+  // Sorting.
   const [sorting, setSorting] = useState<MRT_SortingState>([]);
+
+  // Pagination.
   const [pagination, setPagination] = useState<MRT_PaginationState>({
     pageIndex: 0,
     pageSize: 10,
