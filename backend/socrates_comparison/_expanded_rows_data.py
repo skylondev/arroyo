@@ -47,7 +47,7 @@ def _compute_expanded_rows_data(
         (pl.col("date_end") - pl.col("date_begin")).dt.total_nanoseconds().cast(float)
     ).item() / (86400 * 1e9)
 
-    # Add columns to df containing the tca in days from the polyjectory
+    # Add a column to df containing the tca in days from the polyjectory
     # epoch according to mizuba.
     df = df.with_columns(
         (
@@ -84,6 +84,7 @@ def _compute_expanded_rows_data(
     out_df_ld = pl.DataFrame().lazy()
 
     # First, we convert the time points in tspans to dates for visualisation.
+    # Each tspan gets its own date column.
     out_df_ld = out_df_ld.with_columns(
         list(
             (
