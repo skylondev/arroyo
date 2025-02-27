@@ -100,13 +100,25 @@ class relative_speed_diff_filter(BaseModel):
     value: range_based_fv
 
 
+# The set of columns which allow range-based filtering.
+_col_range_filter = set(
+    [
+        "dca",
+        "relative_speed",
+        "tca_diff",
+        "dca_diff",
+        "relative_speed_diff",
+    ]
+)
+
+
 # NOTE: this is the data sent by the frontend when requesting
 # a set of rows to be displayed.
 class rows_request(BaseModel):
     model_config = {"extra": "forbid"}
 
     begin: int = Field(..., ge=0)
-    nrows: int = Field(..., ge=0, le=500)
+    nrows: int = Field(..., ge=0, le=100)
     # NOTE: this may be an empty array but it will never be null.
     sorting: list[column_sort]
     # NOTE: the full set of filter functions for all columns
@@ -142,13 +154,7 @@ class rows_request(BaseModel):
         # make sure that the selected filter function is consistent
         # with the filter value.
         for flt in self.filters:
-            if flt.id in [
-                "dca",
-                "relative_speed",
-                "tca_diff",
-                "dca_diff",
-                "relative_speed_diff",
-            ]:
+            if flt.id in _col_range_filter:
                 cur_flt_fn = getattr(self.filter_fns, flt.id)
 
                 if cur_flt_fn in [
