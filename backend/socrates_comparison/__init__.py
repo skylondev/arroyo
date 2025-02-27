@@ -184,6 +184,7 @@ def get_conjunctions(
         # in order to account for filtering.
         "tot_nrows": df.select(pl.len()).collect().item(),
         "tot_nconj": len(conj),
+        "threshold": cdata.threshold,
         "conj_ts": cdata.timestamp,
         "comp_time": cdata.comp_time,
         "n_missed_conj": cdata.n_missed_conj,

@@ -379,12 +379,6 @@ def _create_mz_conj_merged(
         "relative_speed_diff",
     )
 
-    # As the very last step, add a leading ID column named "conj_index".
-    # Make sure this is represented as a 64-bit integer, as the documentation
-    # says it could also be a 32-bit int.
-    cdf = cdf.with_row_index("conj_index")
-    cdf = cdf.with_columns(pl.col("conj_index").cast(pl.UInt64))
-
     return n_missed_conj, cdf
 
 
@@ -409,9 +403,9 @@ def _create_mz_conj(
 
 
 # Main function to create a new conjunctions dataframe.
-def _create_new_conj() -> (
-    tuple[int, pl.DataFrame, mz.polyjectory, np.typing.NDArray[np.uint64], Time, Time]
-):
+def _create_new_conj(
+    threshold: float,
+) -> tuple[int, pl.DataFrame, mz.polyjectory, np.typing.NDArray[np.uint64], Time, Time]:
     from ._data import _cache_dir
 
     logger = logging.getLogger("arroyo")
@@ -458,7 +452,7 @@ def _create_new_conj() -> (
     logger.debug("Running conjunction detection")
 
     # Run conjunction detection.
-    cj = mz.conjunctions(pj, 5.0, 3.0 / 1440.0)
+    cj = mz.conjunctions(pj, threshold, 3.0 / 1440.0)
 
     logger.debug("Creating new conjunctions dataframe")
 

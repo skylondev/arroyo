@@ -23,7 +23,6 @@ _cd_path = _cache_dir / "cd.pickle"
 # The conjunctions dataframe schema.
 _conj_df_schema = pl.Schema(
     [
-        ("conj_index", pl.UInt64),
         ("norad_id_i", pl.UInt64),
         ("norad_id_j", pl.UInt64),
         ("object_name_i", pl.String),
@@ -43,7 +42,7 @@ _conj_df_schema = pl.Schema(
 # Current version of the conjunctions data class.
 # NOTE: this needs to be bumped when the conjunctions data class changes.
 # This also includes changes in _conj_df_schema.
-_cd_cur_version = 6
+_cd_cur_version = 7
 
 
 # Conjunctions data class. This is the class that holds the results of
@@ -57,6 +56,8 @@ class conjunction_data:
     df: pl.DataFrame = field(
         default_factory=lambda: pl.DataFrame([], schema=_conj_df_schema)
     )
+    # The conjunction threshold (in km).
+    threshold: float = 0
     # The number of missed conjunctions wrt socrates.
     n_missed_conj: int = 0
     # Computation timestamp (UTC string).
@@ -268,6 +269,8 @@ class _data_processor(threading.Thread):
 
         # Maximum age for the conjunctions data (in seconds).
         MAX_AGE = 4 * 3600
+        # NOTE: hard-coded conjunction threshold of 5km for the time being.
+        THRESHOLD = 5.0
 
         while not self._stop_event.is_set():
             try:
@@ -307,7 +310,7 @@ class _data_processor(threading.Thread):
                 # We need new conjunctions data. Create it, with timing.
                 ts_start = Time.now()
                 n_missed_conj, df, pj, norad_ids, date_begin, date_end = (
-                    _create_new_conj()
+                    _create_new_conj(THRESHOLD)
                 )
                 assert df.schema == _conj_df_schema
                 ts_stop = Time.now()
@@ -327,6 +330,7 @@ class _data_processor(threading.Thread):
                 cdata = conjunction_data(
                     n_missed_conj=n_missed_conj,
                     df=df,
+                    threshold=THRESHOLD,
                     timestamp=ts_stop.utc.iso,
                     comp_time=comp_time,
                     date_begin=date_begin.utc.iso,

@@ -39,7 +39,6 @@ type encounter_data_point = {
 
 // Single row in the conjunctions table sent by the backend.
 type single_row = {
-  conj_index: number;
   norad_ids: string;
   object_names: string;
   tca: string;
@@ -61,6 +60,8 @@ type rows_response = {
   tot_nrows: number;
   // The total number of conjunctions.
   tot_nconj: number;
+  // The conjunction threshold.
+  threshold: number;
   // The conjunctions timestamp.
   conj_ts: string;
   // The total computation time (in seconds).
@@ -301,6 +302,9 @@ const ConjunctionsTable = () => {
   const fetchedConjunctions = table_data?.rows ?? [];
   const totalRowCount = table_data?.tot_nrows ?? 0;
 
+  // Fetch the threshold value.
+  const threshold = table_data?.threshold ?? 0;
+
   // Setup the "missed conjunctions" text element.
   const n_missed_conj = table_data?.n_missed_conj ?? 0;
   const missed_conj = <Text component="span" fw={700} size="l" c={n_missed_conj == 0 ? "green.6" : "red.6"}>
@@ -341,7 +345,9 @@ const ConjunctionsTable = () => {
         <Text size="sm">|</Text>
         <Text size="sm">Last updated: <strong>{table_data?.conj_ts ?? "N/A"} (UTC)</strong></Text>
         <Text size="sm">|</Text>
-        <Text size="sm">Time interval: <strong>{date_begin} (UTC)</strong> — <strong>{date_end} (UTC)</strong></Text>
+        <Text size="sm">Time interval: <strong>{date_begin}</strong> — <strong>{date_end} (UTC)</strong></Text>
+        <Text size="sm">|</Text>
+        <Text size="sm">Threshold: <strong>{threshold}km</strong></Text>
         <Text size="sm">|</Text>
         <Text size="sm">Runtime: <strong>{(table_data?.comp_time ?? 0).toPrecision(4)}s</strong></Text>
         <Text size="sm">|</Text>
@@ -393,7 +399,7 @@ const ConjunctionsTable = () => {
           yAxisProps={{ domain: [0, "auto"] }}
           strokeWidth={3}
           referenceLines={[
-            { y: 5, label: '5 km', color: 'orange.6', strokeDasharray: 2 },
+            { y: threshold, label: `${threshold} km`, color: 'orange.6', strokeDasharray: 2 },
           ]}
         />
       );

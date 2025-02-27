@@ -63,7 +63,7 @@ def _compute_expanded_rows_data(
 
     # Create timespans around the mizuba tcas.
     tspan_delta = 2.0
-    N_tp = 100
+    N_tp = 50
     tspans = np.linspace(
         # NOTE: max/min are necessary in order to avoid
         # getting out of the polyjectory time bounds.

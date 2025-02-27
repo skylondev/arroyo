@@ -16,7 +16,6 @@ class encounter_data_point(BaseModel):
 class single_row(BaseModel):
     model_config = {"extra": "forbid"}
 
-    conj_index: int
     norad_ids: str
     object_names: str
     tca: str
@@ -40,6 +39,8 @@ class rows_response(BaseModel):
     tot_nrows: int = Field(..., ge=0)
     # The total number of conjunctions.
     tot_nconj: int = Field(..., ge=0)
+    # The conjunction threshold.
+    threshold: float = Field(..., ge=0)
     # The timestamp.
     conj_ts: str | None
     # The total computation time (in seconds).
