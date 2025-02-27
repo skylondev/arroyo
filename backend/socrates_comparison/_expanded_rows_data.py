@@ -48,25 +48,18 @@ def _compute_expanded_rows_data(
     ).item() / (86400 * 1e9)
 
     # Add columns to df containing the tca in days from the polyjectory
-    # epoch according to mizuba and socrates.
+    # epoch according to mizuba.
     df = df.with_columns(
         (
             # NOTE: the single value in date_begin is splatted into the shape
             # of pl.col("tca") when subtracting.
             (pl.col("tca") - date_df["date_begin"]).dt.total_nanoseconds().cast(float)
             / (86400 * 1e9)
-        ).alias("tca_days"),
-        (
-            (pl.col("tca_socrates") - date_df["date_begin"])
-            .dt.total_nanoseconds()
-            .cast(float)
-            / (86400 * 1e9)
-        ).alias("tca_socrates_days"),
+        ).alias("tca_days")
     )
 
-    # Extract the tcas in days as numpy arrays.
+    # Extract the tcas in days as a numpy array.
     tca_days = df["tca_days"].to_numpy()
-    tca_socrates_days = df["tca_socrates_days"].to_numpy()
 
     # Create timespans around the mizuba tcas.
     tspan_delta = 2.0

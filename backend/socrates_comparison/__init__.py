@@ -139,9 +139,6 @@ def get_conjunctions(
     # precompute it in the data processor thread.
     expanded_rows_data = _compute_expanded_rows_data(pj, cdata, sub_df_coll)
 
-    # Drop the "tca_socrates" column, as it will not be shown in the table.
-    sub_df_coll = sub_df_coll.drop("tca_socrates")
-
     # Compress the norad id columns into a single string column.
     sub_df_coll = sub_df_coll.with_columns(
         pl.concat_str(
