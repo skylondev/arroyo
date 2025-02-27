@@ -141,6 +141,59 @@ const useGetConjunctions = ({ columnFilterFns, columnFilters, sorting, paginatio
 
 // Function to create the table of conjunctions.
 const ConjunctionsTable = () => {
+  // Manage MRT state that we want to pass to our API.
+
+  // The filter values.
+  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(
+    [],
+  );
+
+  // Filter modes. We have different defaults depending on the column.
+  const [columnFilterFns, setColumnFilterFns] =
+    useState<MRT_ColumnFilterFnsState>(
+      {
+        'norad_ids': 'contains', 'object_names': 'contains',
+        'dca': 'lessThan', 'relative_speed': 'lessThan',
+        'tca_diff': 'lessThan', 'dca_diff': 'lessThan',
+        'relative_speed_diff': 'lessThan',
+      }
+    );
+
+  // Sorting.
+  const [sorting, setSorting] = useState<MRT_SortingState>([]);
+
+  // Pagination.
+  const [pagination, setPagination] = useState<MRT_PaginationState>({
+    pageIndex: 0,
+    pageSize: 10,
+  });
+
+  // Call the react-query hook to fetch the table data from the backend.
+  const { data: table_data, isError: table_data_error, isFetching: table_data_fetching, isLoading: table_data_loading, refetch: table_refetch } = useGetConjunctions({
+    columnFilterFns,
+    columnFilters,
+    pagination,
+    sorting,
+  });
+
+  // Fetch the conjunctions for the current page and the total
+  // number of conjunctions from the response.
+  const fetchedConjunctions = table_data?.rows ?? [];
+  const totalRowCount = table_data?.tot_nrows ?? 0;
+
+  // Fetch the threshold value.
+  const threshold = table_data?.threshold ?? 0;
+
+  // Setup the "missed conjunctions" text element.
+  const n_missed_conj = table_data?.n_missed_conj ?? 0;
+  const missed_conj = <Text component="span" fw={700} size="l" c={n_missed_conj == 0 ? "green.6" : "red.6"}>
+    {n_missed_conj}
+  </Text>;
+
+  // Fetch date_begin/date_end.
+  const date_begin = table_data?.date_begin ?? "N/A";
+  const date_end = table_data?.date_end ?? "N/A";
+
   // Definition of the columns.
   const columns = useMemo<MRT_ColumnDef<single_row>[]>(
     () => {
@@ -218,10 +271,10 @@ const ConjunctionsTable = () => {
             <Box
               style={(theme) => ({
                 backgroundColor:
-                  cell.getValue<number>() < 0.5
+                  cell.getValue<number>() < threshold / 10
                     ? theme.colors.red[9]
-                    : cell.getValue<number>() >= 0.5 &&
-                      cell.getValue<number>() < 2.5
+                    : cell.getValue<number>() >= threshold / 10 &&
+                      cell.getValue<number>() < threshold / 2
                       ? theme.colors.yellow[9]
                       : theme.colors.green[9],
                 borderRadius: '5px',
@@ -259,61 +312,8 @@ const ConjunctionsTable = () => {
         },
       ];
     },
-    [],
+    [threshold],
   );
-
-  // Manage MRT state that we want to pass to our API.
-
-  // The filter values.
-  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(
-    [],
-  );
-
-  // Filter modes. We have different defaults depending on the column.
-  const [columnFilterFns, setColumnFilterFns] =
-    useState<MRT_ColumnFilterFnsState>(
-      {
-        'norad_ids': 'contains', 'object_names': 'contains',
-        'dca': 'lessThan', 'relative_speed': 'lessThan',
-        'tca_diff': 'lessThan', 'dca_diff': 'lessThan',
-        'relative_speed_diff': 'lessThan',
-      }
-    );
-
-  // Sorting.
-  const [sorting, setSorting] = useState<MRT_SortingState>([]);
-
-  // Pagination.
-  const [pagination, setPagination] = useState<MRT_PaginationState>({
-    pageIndex: 0,
-    pageSize: 10,
-  });
-
-  // Call the react-query hook to fetch the table data from the backend.
-  const { data: table_data, isError: table_data_error, isFetching: table_data_fetching, isLoading: table_data_loading, refetch: table_refetch } = useGetConjunctions({
-    columnFilterFns,
-    columnFilters,
-    pagination,
-    sorting,
-  });
-
-  // Fetch the conjunctions for the current page and the total
-  // number of conjunctions from the response.
-  const fetchedConjunctions = table_data?.rows ?? [];
-  const totalRowCount = table_data?.tot_nrows ?? 0;
-
-  // Fetch the threshold value.
-  const threshold = table_data?.threshold ?? 0;
-
-  // Setup the "missed conjunctions" text element.
-  const n_missed_conj = table_data?.n_missed_conj ?? 0;
-  const missed_conj = <Text component="span" fw={700} size="l" c={n_missed_conj == 0 ? "green.6" : "red.6"}>
-    {n_missed_conj}
-  </Text>;
-
-  // Fetch date_begin/date_end.
-  const date_begin = table_data?.date_begin ?? "N/A";
-  const date_end = table_data?.date_end ?? "N/A";
 
   const table = useMantineReactTable({
     columns,
