@@ -64,21 +64,66 @@ def get_conjunctions(
                     )
 
                 case "object_names":
-                    # Filtering based on either object name containing a substring.
+                    # Filtering based on object names.
                     substr = cast(str, filter_v)
 
-                    filters.append(
-                        (
-                            pl.col("object_name_i").str.contains_any(
-                                [substr], ascii_case_insensitive=True
+                    # Check if the user specified names for one or both objects.
+                    str_l = substr.split(":")
+
+                    if len(str_l) == 2:
+                        # The user passed a string of type "a:b". We interpret this
+                        # as the user asking for conjunctions in which one object name
+                        # contains "a" and the other object name contains "b".
+
+                        # Strip the individual names.
+                        str_l = list(s.strip() for s in str_l)
+
+                        # Apply the filter.
+                        filters.append(
+                            (
+                                (
+                                    pl.col("object_name_i").str.contains_any(
+                                        [str_l[0]], ascii_case_insensitive=True
+                                    )
+                                )
+                                & (
+                                    pl.col("object_name_j").str.contains_any(
+                                        [str_l[1]], ascii_case_insensitive=True
+                                    )
+                                )
+                            )
+                            | (
+                                (
+                                    pl.col("object_name_i").str.contains_any(
+                                        [str_l[1]], ascii_case_insensitive=True
+                                    )
+                                )
+                                & (
+                                    pl.col("object_name_j").str.contains_any(
+                                        [str_l[0]], ascii_case_insensitive=True
+                                    )
+                                )
                             )
                         )
-                        | (
-                            pl.col("object_name_j").str.contains_any(
-                                [substr], ascii_case_insensitive=True
+                    else:
+                        # Interpret substr as a single object name.
+
+                        # Strip it.
+                        substr = substr.strip()
+
+                        # Apply the filter.
+                        filters.append(
+                            (
+                                pl.col("object_name_i").str.contains_any(
+                                    [substr], ascii_case_insensitive=True
+                                )
+                            )
+                            | (
+                                pl.col("object_name_j").str.contains_any(
+                                    [substr], ascii_case_insensitive=True
+                                )
                             )
                         )
-                    )
 
                 case _:
                     # In all the other cases, we are dealing with range-based filtering.
