@@ -23,7 +23,19 @@ import {
   useQuery,
 } from '@tanstack/react-query';
 
+// Charts.
+import { LineChart } from '@mantine/charts';
+import '@mantine/charts/styles.css';
+
 import './App.css';
+
+// NOTE: single encounter data point, containing a UTC date
+// (in string format) and the corresponding distance between
+// two objects involved in a conjunction.
+type encounter_data_point = {
+  date: string;
+  dist: number;
+};
 
 // Single row in the conjunctions table sent by the backend.
 type single_row = {
@@ -36,11 +48,14 @@ type single_row = {
   tca_diff: number;
   dca_diff: number;
   relative_speed_diff: number;
+  // NOTE: this is the data which is visualised only
+  // if the row is expanded.
+  expanded_data: Array<encounter_data_point>;
 };
 
 // Set of rows that will be sent by the backend.
 type rows_response = {
-  // The list of conjunctions to be visualised in the current page.
+  // The conjunctions to be visualised in the current page.
   rows: Array<single_row>,
   // The total number of rows.
   tot_nrows: number;
@@ -113,9 +128,8 @@ const useGetConjunctions = ({ columnFilterFns, columnFilters, sorting, paginatio
   // if the result of a previous invocation of queryFunction() for a given 'body' was already
   // computed, the cached result will be returned.
   return useQuery<rows_response>({
-    // Here's the cache: we need to give a unique name ('conjunctions')
-    // and pass the current 'body'.
-    queryKey: ['conjunctions', body],
+    // Here's the cache: we need to give a unique name and pass the current 'body'.
+    queryKey: ['socrates_comparison', body],
     queryFn: queryFunction,
     // NOTE: see https://github.com/TanStack/query/discussions/6460.
     placeholderData: (prev) => prev,
@@ -274,7 +288,7 @@ const ConjunctionsTable = () => {
     pageSize: 10,
   });
 
-  // Call our custom react-query hook to fetch the table data from the backend.
+  // Call the react-query hook to fetch the table data from the backend.
   const { data: table_data, isError: table_data_error, isFetching: table_data_fetching, isLoading: table_data_loading, refetch: table_refetch } = useGetConjunctions({
     columnFilterFns,
     columnFilters,
@@ -318,7 +332,7 @@ const ConjunctionsTable = () => {
     onSortingChange: setSorting,
     renderTopToolbarCustomActions: () => (
       <Group>
-        <Tooltip label="Refresh Data">
+        <Tooltip label="Refresh data">
           <ActionIcon onClick={() => table_refetch()} size='l'>
             <IconRefresh />
           </ActionIcon>
@@ -343,7 +357,6 @@ const ConjunctionsTable = () => {
       showAlertBanner: table_data_error,
       showProgressBars: table_data_fetching,
       sorting,
-      expanded,
     },
     enableColumnActions: false,
     enableColumnDragging: false,
@@ -361,6 +374,29 @@ const ConjunctionsTable = () => {
     },
     mantineTableBodyCellProps: {
       align: 'center',
+    },
+    renderDetailPanel: ({ row }) => {
+      return (
+        <LineChart
+          h={150}
+          w={300}
+          data={row.original.expanded_data}
+          dataKey="date"
+          unit="km"
+          series={[
+            { name: 'dist', color: 'indigo.5', label: 'Range' },
+          ]}
+          curveType="natural"
+          withXAxis={false}
+          withDots={false}
+          yAxisLabel="Range"
+          yAxisProps={{ domain: [0, "auto"] }}
+          strokeWidth={3}
+          referenceLines={[
+            { y: 5, label: '5 km', color: 'orange.6', strokeDasharray: 2 },
+          ]}
+        />
+      );
     },
   });
 

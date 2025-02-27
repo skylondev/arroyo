@@ -1,6 +1,16 @@
 from pydantic import BaseModel, Field
 
 
+# NOTE: single encounter data point, containing a UTC date
+# (in string format) and the corresponding distance between
+# two objects involved in a conjunction.
+class encounter_data_point(BaseModel):
+    model_config = {"extra": "forbid"}
+
+    date: str
+    dist: float
+
+
 # NOTE: this represents a single row in the conjunctions table
 # that is sent to the frontend.
 class single_row(BaseModel):
@@ -15,13 +25,16 @@ class single_row(BaseModel):
     tca_diff: float
     dca_diff: float
     relative_speed_diff: float
+    # NOTE: this is the data which is visualised only
+    # if the row is expanded.
+    expanded_data: list[encounter_data_point]
 
 
 # NOTE: this is the set of rows that will be sent to the frontend.
 class rows_response(BaseModel):
     model_config = {"extra": "forbid"}
 
-    # The list of conjunctions to be visualised in the current page.
+    # The conjunctions to be visualised in the current page.
     rows: list[single_row]
     # The total number of rows.
     tot_nrows: int = Field(..., ge=0)

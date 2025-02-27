@@ -3,6 +3,7 @@ from ._data import _get_conjunctions
 from typing import Any, cast
 from ._response_models import rows_response
 from ._request_models import rows_request, range_filter_fns
+from ._expanded_rows_data import _compute_expanded_rows_data
 import polars as pl
 import logging
 
@@ -21,14 +22,11 @@ def get_conjunctions(
     logger.debug("Processing get_conjunctions() request")
 
     # Fetch the conjunction data.
-    cdata, _ = _get_conjunctions()
+    cdata, pj = _get_conjunctions()
 
     # Fetch the dataframe and a lazy version of it.
     conj = cdata.df
     df = conj.lazy()
-
-    # Drop the "tca_socrates" column, as it will not be shown in the table.
-    df = df.drop("tca_socrates")
 
     # If we have filtering to do, we will collect the filtering expressions
     # here and apply them all at once later.
@@ -136,6 +134,14 @@ def get_conjunctions(
     # Collect it.
     sub_df_coll = sub_df.collect()
 
+    # Compute the expanded rows data.
+    # NOTE: as an alternative to computing this data for each request, we could
+    # precompute it in the data processor thread.
+    expanded_rows_data = _compute_expanded_rows_data(pj, cdata, sub_df_coll)
+
+    # Drop the "tca_socrates" column, as it will not be shown in the table.
+    sub_df_coll = sub_df_coll.drop("tca_socrates")
+
     # Compress the norad id columns into a single string column.
     sub_df_coll = sub_df_coll.with_columns(
         pl.concat_str(
@@ -161,6 +167,15 @@ def get_conjunctions(
 
     # Convert to dicts.
     rows = sub_df_coll.to_dicts()
+
+    # Add the expanded rows data.
+    rows = [
+        {
+            **row,
+            "expanded_data": expanded_rows_data[row_idx],
+        }
+        for row_idx, row in enumerate(rows)
+    ]
 
     ret = {
         "rows": rows,
