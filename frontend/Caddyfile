@@ -1,0 +1,5 @@
+arroyo.skylon.dev {
+	tls fbiscani@skylon.dev
+	root * /var/www/arroyo.skylon.dev
+	file_server
+}
