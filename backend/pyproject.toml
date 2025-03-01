@@ -2,7 +2,7 @@
 name = 'arroyo'
 version = '0.0.1'
 description = ""
-readme = ''
+readme = 'README.md'
 requires-python = '>=3.10'
 dependencies = [
     'numpy == 2.*',
