@@ -97,10 +97,13 @@ type useGetConjunctionsParams = {
   pagination: MRT_PaginationState;
 }
 
+// Fetch the API URL from the env variable.
+const ARROYO_API_URL = import.meta.env.VITE_ARROYO_API_URL;
+
 // react-query hook to fetch the list of conjunctions from the backend.
 const useGetConjunctions = ({ columnFilterFns, columnFilters, sorting, pagination }: useGetConjunctionsParams) => {
   // API url.
-  const url = 'http://localhost:8000/socrates_comparison/';
+  const url = `${ARROYO_API_URL}/socrates_comparison/`;
 
   // The body for the POST request. Here we are setting all the parameters
   // to be passed to the backend.
