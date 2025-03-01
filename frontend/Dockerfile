@@ -11,5 +11,7 @@ FROM caddy:2-alpine
 WORKDIR /var/www/arroyo.skylon.dev
 COPY --from=build /app/dist ./
 COPY Caddyfile /etc/caddy/
+# Fix formatting in the Caddyfile, if needed.
+RUN caddy fmt --overwrite /etc/caddy/Caddyfile
 
 EXPOSE 80 443

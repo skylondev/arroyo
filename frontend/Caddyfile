@@ -2,4 +2,8 @@ arroyo.skylon.dev {
 	tls fbiscani@skylon.dev
 	root * /var/www/arroyo.skylon.dev
 	file_server
+
+	handle_path /api/* {
+		reverse_proxy localhost:8000
+	}
 }
