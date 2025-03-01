@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    volumes:
+      - backend_data:/app/socrates_comparison/cache
+    networks:
+      - internal_network
+    logging:
+      - driver: "journald"
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - internal_network
+      - external_network
+    logging:
+      - driver: "journald"
+    depends_on:
+      - backend
+
+networks:
+  internal_network:
+    internal: true
+  external_network:
+
+volumes:
+  backend_data:

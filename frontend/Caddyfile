@@ -6,4 +6,8 @@ arroyo.skylon.dev {
 	handle_path /api/* {
 		reverse_proxy localhost:8000
 	}
+
+	log {
+		output stdout
+	}
 }
