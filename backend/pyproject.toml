@@ -3,7 +3,7 @@ name = 'arroyo'
 version = '0.0.1'
 description = ""
 readme = 'README.md'
-requires-python = '>=3.10'
+requires-python = '>=3.11'
 dependencies = [
     'numpy == 2.*',
     'polars == 1.*',
