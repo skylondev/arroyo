@@ -4,6 +4,7 @@ from io import StringIO
 from astropy.time import Time  # type: ignore
 import numpy as np
 import re
+from typing import Any
 import logging
 from concurrent.futures import ThreadPoolExecutor
 import mizuba as mz  # type: ignore
@@ -258,61 +259,63 @@ def _create_mz_conj_init(
 def _create_mz_conj_satcat_augment(
     cdf: pl.DataFrame, satcat: pl.DataFrame
 ) -> pl.DataFrame:
-    # Attach the status codes from satcat.
+    # A helper to attach columns from satcat to the mizuba conjunctions
+    # dataframe cdf. scols are the names of the target satcat columns, ocols
+    # are the prefix names of the new columns that will be attached to the conjunctions
+    # dataframe, null_fills the null fill values for the new columns.
+    def attach_columns(
+        cdf: pl.DataFrame, scols: list[str], ocols: list[str], null_fills: list[Any]
+    ) -> pl.DataFrame:
+        assert len(scols) == len(ocols)
+        assert len(scols) == len(null_fills)
+
+        cdf = (
+            cdf.join(
+                satcat.select(["NORAD_CAT_ID", *scols]),
+                how="left",
+                left_on="norad_id_i",
+                right_on="NORAD_CAT_ID",
+            )
+            .with_columns(
+                [
+                    pl.col(scol).fill_null(pl.lit(null_fill)).alias(f"{ocol}_i")
+                    for scol, null_fill, ocol in zip(scols, null_fills, ocols)
+                ]
+            )
+            .drop(*scols)
+        )
+        cdf = (
+            cdf.join(
+                satcat.select(["NORAD_CAT_ID", *scols]),
+                how="left",
+                left_on="norad_id_j",
+                right_on="NORAD_CAT_ID",
+            )
+            .with_columns(
+                [
+                    pl.col(scol).fill_null(pl.lit(null_fill)).alias(f"{ocol}_j")
+                    for scol, null_fill, ocol in zip(scols, null_fills, ocols)
+                ]
+            )
+            .drop(*scols)
+        )
+        return cdf
+
+    # Attach several columns from the satcat.
     # NOTE: in the joined dataframe, replace all null status codes
     # with '?', following https://celestrak.org/satcat/status.php.
-    cdf = (
-        cdf.join(
-            satcat.select(["NORAD_CAT_ID", "OPS_STATUS_CODE"]),
-            how="left",
-            left_on="norad_id_i",
-            right_on="NORAD_CAT_ID",
-        )
-        .with_columns(
-            pl.col("OPS_STATUS_CODE").fill_null(pl.lit("?")).alias("ops_status_i")
-        )
-        .drop("OPS_STATUS_CODE")
-    )
-    cdf = (
-        cdf.join(
-            satcat.select(["NORAD_CAT_ID", "OPS_STATUS_CODE"]),
-            how="left",
-            left_on="norad_id_j",
-            right_on="NORAD_CAT_ID",
-        )
-        .with_columns(
-            pl.col("OPS_STATUS_CODE").fill_null(pl.lit("?")).alias("ops_status_j")
-        )
-        .drop("OPS_STATUS_CODE")
-    )
-
-    # Attach the object names from satcat.
-    # NOTE: in the joined dataframe, replace all null object names
-    # with 'unknown', otherwise having potentially-null object names complicates
-    # the schema of the response to the frontend.
-    cdf = (
-        cdf.join(
-            satcat.select(["NORAD_CAT_ID", "OBJECT_NAME"]),
-            how="left",
-            left_on="norad_id_i",
-            right_on="NORAD_CAT_ID",
-        )
-        .with_columns(
-            pl.col("OBJECT_NAME").fill_null(pl.lit("unknown")).alias("object_name_i")
-        )
-        .drop("OBJECT_NAME")
-    )
-    cdf = (
-        cdf.join(
-            satcat.select(["NORAD_CAT_ID", "OBJECT_NAME"]),
-            how="left",
-            left_on="norad_id_j",
-            right_on="NORAD_CAT_ID",
-        )
-        .with_columns(
-            pl.col("OBJECT_NAME").fill_null(pl.lit("unknown")).alias("object_name_j")
-        )
-        .drop("OBJECT_NAME")
+    cdf = attach_columns(
+        cdf,
+        [
+            "OPS_STATUS_CODE",
+            "OBJECT_NAME",
+            "OBJECT_ID",
+            "LAUNCH_DATE",
+            "OBJECT_TYPE",
+            "RCS",
+        ],
+        ["ops_status", "object_name", "object_id", "launch_date", "object_type", "rcs"],
+        ["?", "unknown", "unknown", "unknown", "unknown", None],
     )
 
     return cdf
@@ -371,6 +374,14 @@ def _create_mz_conj_merged(
         "object_name_j",
         "ops_status_i",
         "ops_status_j",
+        "object_id_i",
+        "object_id_j",
+        "launch_date_i",
+        "launch_date_j",
+        "object_type_i",
+        "object_type_j",
+        "rcs_i",
+        "rcs_j",
         "tca",
         "dca",
         "relative_speed",

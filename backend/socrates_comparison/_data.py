@@ -29,6 +29,14 @@ _conj_df_schema = pl.Schema(
         ("object_name_j", pl.String),
         ("ops_status_i", pl.String),
         ("ops_status_j", pl.String),
+        ("object_id_i", pl.String),
+        ("object_id_j", pl.String),
+        ("launch_date_i", pl.String),
+        ("launch_date_j", pl.String),
+        ("object_type_i", pl.String),
+        ("object_type_j", pl.String),
+        ("rcs_i", pl.Float64),
+        ("rcs_j", pl.Float64),
         ("tca", pl.Datetime(time_unit="ns", time_zone="UTC")),
         ("dca", pl.Float64),
         ("relative_speed", pl.Float64),
@@ -42,7 +50,7 @@ _conj_df_schema = pl.Schema(
 # Current version of the conjunctions data class.
 # NOTE: this needs to be bumped when the conjunctions data class changes.
 # This also includes changes in _conj_df_schema.
-_cd_cur_version = 7
+_cd_cur_version = 8
 
 
 # Conjunctions data class. This is the class that holds the results of

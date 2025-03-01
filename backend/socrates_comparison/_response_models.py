@@ -18,6 +18,20 @@ class single_row(BaseModel):
 
     norad_ids: str
     object_names: str
+    norad_id_i: int = Field(..., ge=0)
+    norad_id_j: int = Field(..., ge=0)
+    object_name_i: str
+    object_name_j: str
+    ops_status_i: str
+    ops_status_j: str
+    object_id_i: str
+    object_id_j: str
+    launch_date_i: str
+    launch_date_j: str
+    object_type_i: str
+    object_type_j: str
+    rcs_i: float | None
+    rcs_j: float | None
     tca: str
     dca: float
     relative_speed: float

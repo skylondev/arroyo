@@ -13,7 +13,7 @@ import {
 } from 'mantine-react-table';
 
 // UI elements.
-import { ActionIcon, Tooltip, Box, Text, Stack, Group } from '@mantine/core';
+import { ActionIcon, Tooltip, Box, Text, Stack, Group, Table, Flex, Anchor, Container } from '@mantine/core';
 import { IconRefresh } from '@tabler/icons-react';
 
 // react-query imports.
@@ -41,6 +41,20 @@ type encounter_data_point = {
 type single_row = {
   norad_ids: string;
   object_names: string;
+  norad_id_i: number;
+  norad_id_j: number;
+  object_name_i: string;
+  object_name_j: string;
+  ops_status_i: string;
+  ops_status_j: string;
+  object_id_i: string;
+  object_id_j: string;
+  launch_date_i: string;
+  launch_date_j: string;
+  object_type_i: string;
+  object_type_j: string;
+  rcs_i: number | null;
+  rcs_j: number | null;
   tca: string;
   dca: number;
   relative_speed: number;
@@ -383,25 +397,83 @@ const ConjunctionsTable = () => {
     },
     renderDetailPanel: ({ row }) => {
       return (
-        <LineChart
-          h={150}
-          w={300}
-          data={row.original.expanded_data}
-          dataKey="date"
-          unit="km"
-          series={[
-            { name: 'dist', color: 'indigo.5', label: 'Range' },
-          ]}
-          curveType="natural"
-          withXAxis={false}
-          withDots={false}
-          yAxisLabel="Range"
-          yAxisProps={{ domain: [0, "auto"] }}
-          strokeWidth={3}
-          referenceLines={[
-            { y: threshold, label: `${threshold} km`, color: 'orange.6', strokeDasharray: 2 },
-          ]}
-        />
+        <Container style={{ width: "75%" }}>
+          <Flex justify="center" gap="xl">
+            <Table variant="vertical" layout="fixed" withTableBorder style={{ flex: 1 }}>
+              <Table.Tbody>
+                <Table.Tr>
+                  <Table.Th>Norad ID</Table.Th>
+                  <Table.Td>{row.original.norad_id_i}</Table.Td>
+                  <Table.Td>{row.original.norad_id_j}</Table.Td>
+                </Table.Tr>
+                <Table.Tr>
+                  <Table.Th>Name</Table.Th>
+                  <Table.Td>{row.original.object_name_i}</Table.Td>
+                  <Table.Td>{row.original.object_name_j}</Table.Td>
+                </Table.Tr>
+                <Table.Tr>
+                  <Table.Th><Anchor href="https://celestrak.org/satcat/status.php" target="_blank" fw="inherit" fz="inherit">OPS status</Anchor></Table.Th>
+                  <Table.Td>[{row.original.ops_status_i}]</Table.Td>
+                  <Table.Td>[{row.original.ops_status_j}]</Table.Td>
+                </Table.Tr>
+                <Table.Tr>
+                  <Table.Th>COSPAR ID</Table.Th>
+                  <Table.Td>{row.original.object_id_i}</Table.Td>
+                  <Table.Td>{row.original.object_id_j}</Table.Td>
+                </Table.Tr>
+                <Table.Tr>
+                  <Table.Th>Launch date</Table.Th>
+                  <Table.Td>{row.original.launch_date_i}</Table.Td>
+                  <Table.Td>{row.original.launch_date_j}</Table.Td>
+                </Table.Tr>
+                <Table.Tr>
+                  <Table.Th><Anchor href="https://celestrak.org/satcat/satcat-format.php" target="_blank" fw="inherit" fz="inherit">Object type</Anchor></Table.Th>
+                  <Table.Td>{row.original.object_type_i}</Table.Td>
+                  <Table.Td>{row.original.object_type_j}</Table.Td>
+                </Table.Tr>
+                <Table.Tr>
+                  <Table.Th>RCS (m²)</Table.Th>
+                  <Table.Td>{row.original.rcs_i?.toString() ?? "N/A"}</Table.Td>
+                  <Table.Td>{row.original.rcs_j?.toString() ?? "N/A"}</Table.Td>
+                </Table.Tr>
+              </Table.Tbody>
+            </Table>
+            <LineChart
+              style={{ flex: 1 }}
+              data={row.original.expanded_data}
+              dataKey="date"
+              unit="km"
+              series={[
+                { name: 'dist', color: 'indigo.5', label: 'Range' },
+              ]}
+              curveType="natural"
+              withDots={false}
+              xAxisProps={{
+                label: {
+                  value: "Time",
+                  position: "insideBottom",
+                  offset: 5,
+                  fontSize: 12,
+                },
+                tick: false
+              }}
+              yAxisProps={{
+                label: {
+                  value: "Range",
+                  position: "insideLeft",
+                  offset: -5,
+                  fontSize: 12,
+                  angle: -90,
+                  domain: [0, "auto"]
+                },
+              }}
+              strokeWidth={3}
+              referenceLines={[
+                { y: threshold, label: `${threshold} km`, color: 'orange.6', strokeDasharray: 2 },
+              ]}
+            />
+          </Flex>
+        </Container>
       );
     },
   });

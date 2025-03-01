@@ -191,16 +191,16 @@ def get_conjunctions(
             pl.col("norad_id_j").cast(str),
             separator=" | ",
         ).alias("norad_ids")
-    ).drop("norad_id_i", "norad_id_j")
+    )
 
     # Compress object names and statuses into a single column.
     sub_df_coll = sub_df_coll.with_columns(
         pl.concat_str(
-            pl.col("object_name_i") + " [" + pl.col("ops_status_i") + "]",
-            pl.col("object_name_j") + " [" + pl.col("ops_status_j") + "]",
+            pl.col("object_name_i"),
+            pl.col("object_name_j"),
             separator=" | ",
         ).alias("object_names")
-    ).drop("object_name_i", "ops_status_i", "object_name_j", "ops_status_j")
+    )
 
     # Convert the tca column to UTC ISO string with ms precision.
     sub_df_coll = sub_df_coll.with_columns(
