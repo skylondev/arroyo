@@ -4,7 +4,10 @@ arroyo.skylon.dev {
 	file_server
 
 	handle_path /api/* {
-		reverse_proxy localhost:8000
+		# NOTE: need "backend:" here to specify
+		# we need to connect to port 8000 on the
+		# backend container.
+		reverse_proxy backend:8000
 	}
 
 	log {
