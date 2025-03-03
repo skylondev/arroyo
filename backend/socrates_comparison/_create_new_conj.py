@@ -463,7 +463,7 @@ def _create_new_conj(
     logger.debug("Running conjunction detection")
 
     # Run conjunction detection.
-    cj = mz.conjunctions(pj, threshold, 3.0 / 1440.0)
+    cj = mz.conjunctions(pj, threshold, 3.0 / 1440.0, tmpdir=_cache_dir)
 
     logger.debug("Creating new conjunctions dataframe")
 

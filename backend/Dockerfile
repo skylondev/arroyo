@@ -2,14 +2,10 @@
 FROM python:3.12
 
 # Setup env variables.
-ENV TMPDIR=/app/tmpdir
 ENV ARROYO_BACKEND_DEVELOPMENT=true
 
 # Set the working directory inside the container.
 WORKDIR /app
-
-# Prepare the temp dir.
-RUN mkdir tmpdir
 
 # Install uv.
 RUN pip install --no-cache-dir uv
