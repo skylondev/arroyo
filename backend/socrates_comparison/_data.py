@@ -90,72 +90,14 @@ class conjunction_data:
 _pj_data_prefix = "mizuba_polyjectory"
 
 
-# Helper for the initial setup of the conjunctions data.
-# NOTE: this function only checks for the existence of a pickled conjunction_data
-# instance, it does not attempt any check on the polyjectory data.
-def _conj_init_setup() -> tuple[conjunction_data, mz.polyjectory | None]:
-    logger = logging.getLogger("arroyo")
-
-    # Check if we have existing data in the cache.
-    if _cd_path.exists():
-        # There is conjunctions data in the cache, load it.
-        assert _cd_path.is_file()
-
-        logger.debug(
-            f"Existing conjunctions data with UTC mtime {Time(val=os.path.getmtime(_cd_path), format='unix').utc.iso} found on startup"
-        )
-
-        try:
-            with open(_cd_path, "rb") as f:
-                ret: conjunction_data = pickle.load(f)
-
-            # Check the version of the data class.
-            if ret.version != _cd_cur_version:
-                raise ValueError(
-                    f"Invalid existing conjunctions data version detected during unpickling: the version in the archive is {ret.version} but the expected version is {_cd_cur_version}"
-                )
-            assert ret.pj_dir_name is not None
-
-            # Try to mount a polyjectory on ret.pj_dir_name.
-            mount_point = _cache_dir / ret.pj_dir_name
-            logger.debug(
-                f"Attempting to mount a polyjectory on the '{mount_point}' directory"
-            )
-            pj = mz.polyjectory.mount(mount_point)
-            logger.debug(
-                f"polyjectory successfully mounted on the '{mount_point}' directory"
-            )
-
-        except Exception:
-            logger.error(
-                "Exception caught while attempting to load cached conjunctions data, deleting all cached data and returning empty data instead",
-                exc_info=True,
-                stack_info=True,
-            )
-
-            # Delete the existing conjunctions data.
-            _cd_path.unlink()
-
-            return conjunction_data(), None
-
-        return ret, pj
-    else:
-        # No data in the cache, return empty data.
-        logger.debug(
-            "No existing conjunctions data found on startup, initialising empty data"
-        )
-
-        return conjunction_data(), None
-
-
-# Initial setup of the conjunctions data.
+# Global conjunctions data, protected for multithreaded access.
 _conj_lock = threading.Lock()
 # NOTE: conjunctions data and pj are stored packed in a tuple.
 # The intent here is to promote atomicity during updates via
 # _set_conjunctions().
 # NOTE: if needed, we could think about introducing an ad-hoc
 # dataclass here instead of the tuple.
-_conj_data = _conj_init_setup()
+_conj_data = (conjunction_data(), None)
 
 
 # Thread-safe getter for the conjunctions data.
@@ -183,10 +125,72 @@ def _set_conjunctions(new_conj: conjunction_data, new_pj: mz.polyjectory) -> Non
 
 # The data processor thread.
 class _data_processor(threading.Thread):
+    # Helper for the initial setup of the conjunctions data.
+    # NOTE: this function only checks for the existence of a pickled conjunction_data
+    # instance, it does not attempt any check on the polyjectory data.
+    def _conj_init_setup(self) -> tuple[conjunction_data, mz.polyjectory | None]:
+        logger = logging.getLogger("arroyo")
+
+        # Check if we have existing data in the cache.
+        if _cd_path.exists():
+            # There is conjunctions data in the cache, load it.
+            assert _cd_path.is_file()
+
+            logger.debug(
+                f"Existing conjunctions data with UTC mtime {Time(val=os.path.getmtime(_cd_path), format='unix').utc.iso} found on startup"
+            )
+
+            try:
+                with open(_cd_path, "rb") as f:
+                    ret: conjunction_data = pickle.load(f)
+
+                # Check the version of the data class.
+                if ret.version != _cd_cur_version:
+                    raise ValueError(
+                        f"Invalid existing conjunctions data version detected during unpickling: the version in the archive is {ret.version} but the expected version is {_cd_cur_version}"
+                    )
+                assert ret.pj_dir_name is not None
+
+                # Try to mount a polyjectory on ret.pj_dir_name.
+                mount_point = _cache_dir / ret.pj_dir_name
+                logger.debug(
+                    f"Attempting to mount a polyjectory on the '{mount_point}' directory"
+                )
+                pj = mz.polyjectory.mount(mount_point)
+                logger.debug(
+                    f"polyjectory successfully mounted on the '{mount_point}' directory"
+                )
+
+            except Exception:
+                logger.error(
+                    "Exception caught while attempting to load cached conjunctions data, deleting all cached data and returning empty data instead",
+                    exc_info=True,
+                    stack_info=True,
+                )
+
+                # Delete the existing conjunctions data.
+                _cd_path.unlink()
+
+                return conjunction_data(), None
+
+            return ret, pj
+        else:
+            # No data in the cache, return empty data.
+            logger.debug(
+                "No existing conjunctions data found on startup, initialising empty data"
+            )
+
+            return conjunction_data(), None
+
     def __init__(self) -> None:
         super().__init__()
+
+        # Initial setup of the global conjunction data.
+        _set_conjunctions(*self._conj_init_setup())
+
         # Setup the stop event.
         self._stop_event = threading.Event()
+
         # Setup the polyjectory archive. Here we store weak references
         # to polyjectories, associated to the *absolute* locations on disk
         # of their data. We will periodically iterate over this list and
