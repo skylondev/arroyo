@@ -24,7 +24,7 @@ RUN uv sync
 COPY . .
 
 # Run fasapi.
-CMD ["uv", "run", "--", "fastapi", "main.py"]
+CMD ["uv", "run", "--", "fastapi", "run", "main.py"]
 
 # Expose FastAPI's default port.
 EXPOSE 8000
