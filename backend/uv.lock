@@ -42,7 +42,7 @@ dependencies = [
 requires-dist = [
     { name = "astropy", specifier = "==7.*" },
     { name = "fastapi", extras = ["standard"], specifier = "==0.115.*" },
-    { name = "mizuba", specifier = "==0.0.8" },
+    { name = "mizuba", specifier = "==0.0.9" },
     { name = "numpy", specifier = "==2.*" },
     { name = "polars", specifier = "==1.*" },
     { name = "requests", specifier = "==2.*" },
@@ -394,7 +394,7 @@ wheels = [
 
 [[package]]
 name = "mizuba"
-version = "0.0.8"
+version = "0.0.9"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "astropy" },
@@ -403,9 +403,9 @@ dependencies = [
     { name = "requests" },
 ]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/d0/19/005c512f55ef19b2f89ffaec11c2e0b959a0f08a915c1a691934769881d8/mizuba-0.0.8-cp311-cp311-manylinux_2_28_x86_64.whl", hash = "sha256:e1a62c7eeff5aa6d30bccc4137d294fc6d913e689b58bf816289c3f5b1402f54", size = 99516296 },
-    { url = "https://files.pythonhosted.org/packages/86/3b/34c9fcebd69d11a57f0dceb8e8bf8aefecf0125b27ff674f5132a500400f/mizuba-0.0.8-cp312-cp312-manylinux_2_28_x86_64.whl", hash = "sha256:bc371eb4b0955b26cf298d995697f8551fe502b34464d1d6216c00019021ee71", size = 99517550 },
-    { url = "https://files.pythonhosted.org/packages/85/02/2abb93aeffe1c95cc4a32ea49c188ec07e0588347dfd1f6ac19f7989d9b2/mizuba-0.0.8-cp313-cp313-manylinux_2_28_x86_64.whl", hash = "sha256:5f2714996848fbc02940c5d3b6f64b483c08bf13d5ac3dbdc536a0ac416dfaa8", size = 99517204 },
+    { url = "https://files.pythonhosted.org/packages/25/04/fee64f787469949286ab8b0d2bb3ff9db2e8818e9f96921b8f76444511e2/mizuba-0.0.9-cp311-cp311-manylinux_2_28_x86_64.whl", hash = "sha256:0ac03cf2a7dbdbceeaf6f3517be87ca061d6b37e2e19394d07d6362966b11e55", size = 99516370 },
+    { url = "https://files.pythonhosted.org/packages/3a/02/42e470b8e6e464f88615dd46fe024995245c030dc178cd0c1d26df265b31/mizuba-0.0.9-cp312-cp312-manylinux_2_28_x86_64.whl", hash = "sha256:7bf1d486e1592a131632e5775d3ea03d5c28613aac8c9f15c078fe81f3af5d2c", size = 99517400 },
+    { url = "https://files.pythonhosted.org/packages/b0/0d/32b11c6bf1c52de497eefc06be2590abe67ebf865fccc85c17b579a0565b/mizuba-0.0.9-cp313-cp313-manylinux_2_28_x86_64.whl", hash = "sha256:ec2f6b1abe782e0eccd9c3ffcbb2bcbb43184dfee117d58c3b1a079fb8218c8b", size = 99517789 },
 ]
 
 [[package]]
