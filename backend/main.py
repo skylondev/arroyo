@@ -51,6 +51,7 @@ async def lifespan(app: FastAPI) -> Any:
 
 origins = [
     "http://localhost:5173",
+    "https://arroyo.skylon.dev:443",
 ]
 
 app = FastAPI(lifespan=lifespan)
