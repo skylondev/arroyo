@@ -283,6 +283,13 @@ class _data_processor(threading.Thread):
         MAX_AGE = 4 * 3600
         # NOTE: hard-coded conjunction threshold of 5km for the time being.
         THRESHOLD = 5.0
+        # Initial value for the delay time for retrial if exceptions are
+        # caught in the main loop (in seconds).
+        INIT_RETRY_DELAY = 10
+
+        # Current value of the retry delay time. This will be increased in an
+        # exponential fashion of the main loop repeatedly fails.
+        retry_delay = INIT_RETRY_DELAY
 
         while not self._stop_event.is_set():
             try:
@@ -307,6 +314,9 @@ class _data_processor(threading.Thread):
                         f"Found suitable conjunctions data with age {conj_age}s, sleeping for {sleep_time}s"
                     )
                     self._stop_event.wait(sleep_time)
+
+                    # NOTE: successful loop iteration, reset retry_delay.
+                    retry_delay = INIT_RETRY_DELAY
 
                     # Continue to the next loop iteration.
                     continue
@@ -400,9 +410,12 @@ class _data_processor(threading.Thread):
                 logger.debug(f"Sleeping for {MAX_AGE}s")
 
                 self._stop_event.wait(MAX_AGE)
+
+                # NOTE: successful loop iteration, reset retry_delay.
+                retry_delay = INIT_RETRY_DELAY
             except Exception:
                 logger.error(
-                    "Exception caught in the data processor thread, re-trying in 10 seconds",
+                    f"Exception caught in the data processor thread, re-trying in {retry_delay} seconds",
                     exc_info=True,
                     stack_info=True,
                 )
@@ -410,7 +423,11 @@ class _data_processor(threading.Thread):
                 # Trigger a cache cleanup before sleeping.
                 self._cache_pj_cleanup()
 
-                self._stop_event.wait(10)
+                # Go to sleep.
+                self._stop_event.wait(retry_delay)
+
+                # Before retrying, update retry_delay with exponential backoff.
+                retry_delay = retry_delay * 2
 
         # Trigger a final cache cleanup before shutting down.
         self._cache_pj_cleanup()
