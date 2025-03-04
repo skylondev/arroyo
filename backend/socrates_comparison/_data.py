@@ -361,7 +361,9 @@ class _data_processor(threading.Thread):
                     norad_ids=norad_ids,
                 )
 
-                logger.debug("New conjunctions data successfully created")
+                logger.debug(
+                    f"New conjunctions data successfully created ({n_missed_conj} missed conjunctions)"
+                )
 
                 # Save the conjunctions data into the cache.
                 #
