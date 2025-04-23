@@ -329,7 +329,20 @@ class _data_processor(threading.Thread):
                         "No conjunctions data found in the cache, creating new data"
                     )
 
-                # We need new conjunctions data. Create it, with timing.
+                # If we end up here, it means we need to create new conjunction data.
+                # Before doing that, we want to hint mizuba to release the mmapped memory
+                # from the current polyjectory (if existing), in an effort to help
+                # reducing the pressure on the memory subsystem.
+
+                # Attempt to fetch the polyjectory.
+                old_pj = _get_conjunctions()[1]
+                if old_pj is not None:
+                    # Apply the hint.
+                    logger.debug("Marking the old polyjectory data as releasable")
+                    old_pj.hint_release()
+                    logger.debug("Old polyjectory data marked as releasable")
+
+                # Create the new conjunction data, with timing.
                 ts_start = Time.now()
                 n_missed_conj, df, pj, norad_ids, date_begin, date_end = (
                     _create_new_conj(THRESHOLD)
