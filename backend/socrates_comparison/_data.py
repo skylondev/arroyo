@@ -341,6 +341,9 @@ class _data_processor(threading.Thread):
                     logger.debug("Marking the old polyjectory data as releasable")
                     old_pj.hint_release()
                     logger.debug("Old polyjectory data marked as releasable")
+                    # NOTE: make sure we delete old_pj in order
+                    # to avoid holding a reference to it.
+                    del old_pj
 
                 # Create the new conjunction data, with timing.
                 ts_start = Time.now()
