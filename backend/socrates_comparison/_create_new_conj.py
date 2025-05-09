@@ -336,6 +336,7 @@ def _create_mz_conj_merged(
         on="tca",
         strategy="nearest",
         coalesce=False,
+        check_sortedness=False,
     )
 
     # Determine the number of missed conjunctions (hopefully zero).
