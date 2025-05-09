@@ -327,13 +327,15 @@ def _create_mz_conj_merged(
 ) -> tuple[int, pl.DataFrame]:
     # Construct the joined dataframe. This will match all the conjunctions
     # detected by socrates to corresponding conjunctions detected by mizuba.
+    #
+    # NOTE: the check_sortedness=True argument should be used as a sanity check,
+    # but currently it is disabled if the "by" argument is also specified
     cdf = soc_df.sort("tca").join_asof(
         cdf.sort("tca"),
         by=["norad_id_i", "norad_id_j"],
         on="tca",
         strategy="nearest",
         coalesce=False,
-        check_sortedness=True,
     )
 
     # Determine the number of missed conjunctions (hopefully zero).
