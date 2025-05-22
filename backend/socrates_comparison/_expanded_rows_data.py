@@ -68,7 +68,9 @@ def _compute_expanded_rows_data(
         # NOTE: max/min are necessary in order to avoid
         # getting out of the polyjectory time bounds.
         np.maximum(tca_days - tspan_delta / 86400, 0.0),
-        np.minimum(tca_days + tspan_delta / 86400, duration),
+        # NOTE: important to use nextafter() here because
+        # the polyjectory time interval is a half-open range.
+        np.minimum(tca_days + tspan_delta / 86400, np.nextafter(duration, 0.0)),
         N_tp,
     ).T
     tspans = np.ascontiguousarray(tspans)
